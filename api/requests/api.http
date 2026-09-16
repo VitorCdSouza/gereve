@@ -6,8 +6,26 @@ GET {{baseUrl}}/health
 ### rota inexistente, esperado: 404 ROUTE_NOT_FOUND
 GET {{baseUrl}}/rota-que-nao-existe
 
-### corpo com JSON malformado, esperado: 400 INVALID_JSON
+### request JSON malformado, esperado: 400 INVALID_JSON
 POST {{baseUrl}}/health
 Content-Type: application/json
 
-{ "campo":
+{ "campo": }
+
+### request cors, origem permitida, esperado: 200 com access-control-allow-origin
+GET {{baseUrl}}/health
+Origin: http://localhost:5173
+
+### request cors, origem não permitida, esperado: 200 sem access-control-allow-origin
+GET {{baseUrl}}/health
+Origin: http://localhost:9999
+
+### request cors, origem permitida, esperado: 204 com access-control-allow-origin e access-control-allow-methods
+OPTIONS {{baseUrl}}/health
+Origin: http://localhost:5173
+Access-Control-Request-Method: GET
+
+### request cors, origem não permitida, esperado: 204 sem access-control-allow-origin
+OPTIONS {{baseUrl}}/health
+Origin: http://localhost:9999
+Access-Control-Request-Method: GET
