@@ -1,4 +1,6 @@
 import express, { Request, Response } from 'express';
+import { notFound } from './middlewares/notFound';
+import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
 
@@ -10,5 +12,8 @@ app.get('/health', (req: Request, res: Response) => {
         timestamp: new Date().toISOString(),
     });
 });
+
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;
