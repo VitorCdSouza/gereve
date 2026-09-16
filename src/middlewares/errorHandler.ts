@@ -30,12 +30,14 @@ export function errorHandler(
 
     // erro de corpo invalido
     if (error instanceof SyntaxError && 'body' in error) {
-        res.status(400).json({
+        const body: ErrorResponseBody = {
             error: {
                 code: 'INVALID_JSON',
                 message: 'Corpo da requisição não é um JSON válido',
             },
-        });
+        };
+
+        res.status(400).json(body);
         return;
     }
 
@@ -43,10 +45,12 @@ export function errorHandler(
         console.error('erro não tratado:', error);
     }
 
-    res.status(500).json({
+    const body: ErrorResponseBody = {
         error: {
             code: 'INTERNAL_SERVER_ERROR',
             message: 'Erro interno do servidor',
         },
-    });
+    };
+
+    res.status(500).json(body);
 }
