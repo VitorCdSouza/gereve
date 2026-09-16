@@ -1,13 +1,31 @@
 import { NextFunction, Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
 import { AppError } from '../errors/AppError';
 import { env } from '../config/env';
+
+type ValidationIssue = {
+    field: string;
+    message: string;
+};
 
 type ErrorResponseBody = {
     error: {
         code: string;
         message: string;
+        details?: ValidationIssue[];
     };
 };
+
+function toValidationIssues(error: ZodError): ValidationIssue[] {
+    const issues = error.issues.map((issue) => {
+        const field = issue.path.join('.');
+
+        return { field, message: issue.message };
+    });
+
+    return issues;
+}
 
 export function errorHandler(
     error: unknown,
@@ -25,6 +43,33 @@ export function errorHandler(
         };
 
         res.status(error.statusCode).json(body);
+        return;
+    }
+
+    // recebido pelo validate.ts
+    if (error instanceof ZodError) {
+        const body: ErrorResponseBody = {
+            error: {
+                code: 'VALIDATION_ERROR',
+                message: 'Dados inválidos',
+                details: toValidationIssues(error),
+            },
+        };
+
+        res.status(400).json(body);
+        return;
+    }
+
+    // recebe pelo prisma ao tentar inserir duplicado
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const body: ErrorResponseBody = {
+            error: {
+                code: 'RESOURCE_ALREADY_EXISTS',
+                message: 'Já existe um registro com os dados informados',
+            },
+        };
+
+        res.status(409).json(body);
         return;
     }
 

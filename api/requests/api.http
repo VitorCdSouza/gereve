@@ -4,7 +4,7 @@
 GET {{baseUrl}}/health
 
 ### rota inexistente, esperado: 404 ROUTE_NOT_FOUND
-GET {{baseUrl}}/rota-que-nao-existe
+GET {{baseUrl}}/rota-inexistente
 
 ### request JSON malformado, esperado: 400 INVALID_JSON
 POST {{baseUrl}}/health
@@ -29,3 +29,39 @@ Access-Control-Request-Method: GET
 OPTIONS {{baseUrl}}/health
 Origin: http://localhost:9999
 Access-Control-Request-Method: GET
+
+### cadastro, esperado: 201 com o usuario sem passwordHash
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Vitor Souza",
+    "email": "vitor@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+### cadastro com e-mail em uso, esperado: 409 RESOURCE_ALREADY_EXISTS
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Outro Vitor",
+    "email": "vitor@gereve.dev",
+    "password": "senha-forte-456"
+}
+
+### cadastro com dados invalidos, esperado: 400 VALIDATION_ERROR com details
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Vi",
+    "email": "nao-e-email",
+    "password": "curta"
+}
+
+### cadastro sem corpo, esperado: 400 VALIDATION_ERROR com details
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{}
