@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { env } from './config/env';
+import { authRouter } from './routes/auth.routes';
 import { notFound } from './middlewares/notFound';
 import { errorHandler } from './middlewares/errorHandler';
 
@@ -15,6 +16,8 @@ app.get('/health', (req: Request, res: Response) => {
         timestamp: new Date().toISOString(),
     });
 });
+
+app.use('/auth', authRouter);
 
 app.use(notFound);
 app.use(errorHandler);
