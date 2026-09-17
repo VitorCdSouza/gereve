@@ -12,3 +12,9 @@ export async function createUser(data: CreateUserData): Promise<User> {
 
     return createdUser;
 }
+
+export async function findUserByEmail(email: string): Promise<User | null> {
+    const foundUser = await prismaClient.user.findUnique({ where: { email } });
+
+    return foundUser;
+}

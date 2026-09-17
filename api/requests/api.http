@@ -65,3 +65,39 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {}
+
+### login, esperado: 200 com token e usuario sem passwordHash
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "vitor@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+### login com senha errada, esperado: 401 INVALID_CREDENTIALS
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "vitor@gereve.dev",
+    "password": "senha-errada-123"
+}
+
+### login com e-mail inexistente, esperado: 401 INVALID_CREDENTIALS
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "ninguem@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+### login com dados invalidos, esperado: 400 VALIDATION_ERROR com details
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "nao-e-email",
+    "password": ""
+}

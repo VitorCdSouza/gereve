@@ -1,7 +1,9 @@
 import bcrypt from 'bcrypt';
 import { User, UserRole } from '@prisma/client';
-import { createUser } from '../repositories/user.repository';
-import { RegisterUserInput } from '../schemas/auth.schema';
+import { createUser, findUserByEmail } from '../repositories/user.repository';
+import { LoginUserInput, RegisterUserInput } from '../schemas/auth.schema';
+import { signAccessToken } from '../lib/token';
+import { AppError } from '../errors/AppError';
 
 const PASSWORD_SALT_ROUNDS = 10;
 
@@ -25,6 +27,11 @@ function toPublicUser(user: User): PublicUser {
     };
 }
 
+export type LoginResult = {
+    token: string;
+    user: PublicUser;
+};
+
 export async function registerUser(input: RegisterUserInput): Promise<PublicUser> {
     const passwordHash = await bcrypt.hash(input.password, PASSWORD_SALT_ROUNDS);
 
@@ -35,4 +42,31 @@ export async function registerUser(input: RegisterUserInput): Promise<PublicUser
     });
 
     return toPublicUser(createdUser);
+}
+
+export async function loginUser(input: LoginUserInput): Promise<LoginResult> {
+    const invalidCredentialsError = new AppError(
+        'E-mail ou senha inválidos',
+        401,
+        'INVALID_CREDENTIALS',
+    );
+
+    const foundUser = await findUserByEmail(input.email);
+
+    if (foundUser === null) {
+        throw invalidCredentialsError;
+    }
+
+    const passwordMatches = await bcrypt.compare(input.password, foundUser.passwordHash);
+
+    if (!passwordMatches) {
+        throw invalidCredentialsError;
+    }
+
+    const token = signAccessToken({ sub: foundUser.id, role: foundUser.role });
+
+    return {
+        token,
+        user: toPublicUser(foundUser),
+    };
 }

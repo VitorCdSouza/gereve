@@ -24,3 +24,10 @@ export const registerUserSchema = z.object({
 });
 
 export type RegisterUserInput = z.infer<typeof registerUserSchema>;
+
+export const loginUserSchema = z.object({
+    email: emailSchema,
+    password: z.string({ error: 'Senha é obrigatória' }).min(1, { error: 'Senha é obrigatória' }),
+});
+
+export type LoginUserInput = z.infer<typeof loginUserSchema>;
