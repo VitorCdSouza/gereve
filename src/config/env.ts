@@ -27,6 +27,10 @@ const environmentSchema = z.object({
         error: 'deve ser uma URL de conexão PostgreSQL válida',
     }),
     CORS_ORIGINS: originListSchema,
+    JWT_SECRET: z
+        .string({ error: 'é obrigatório' })
+        .min(32, { error: 'deve ter ao menos 32 caracteres' }),
+    JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(86400),
 });
 
 export type Environment = z.infer<typeof environmentSchema>;
