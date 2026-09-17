@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { User, UserRole } from '@prisma/client';
-import { createUser, findUserByEmail } from '../repositories/user.repository';
+import { createUser, findUserByEmail, findUserById } from '../repositories/user.repository';
 import { LoginUserInput, RegisterUserInput } from '../schemas/auth.schema';
 import { signAccessToken } from '../lib/token';
 import { AppError } from '../errors/AppError';
@@ -69,4 +69,14 @@ export async function loginUser(input: LoginUserInput): Promise<LoginResult> {
         token,
         user: toPublicUser(foundUser),
     };
+}
+
+export async function getAuthenticatedUser(userId: string): Promise<PublicUser> {
+    const foundUser = await findUserById(userId);
+
+    if (foundUser === null) {
+        throw new AppError('Usuário não encontrado', 404, 'USER_NOT_FOUND');
+    }
+
+    return toPublicUser(foundUser);
 }

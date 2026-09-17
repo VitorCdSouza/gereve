@@ -1,7 +1,15 @@
 @baseUrl = http://localhost:3333
 
+# =============================================================================
+# health
+# =============================================================================
+
 ### health
 GET {{baseUrl}}/health
+
+# =============================================================================
+# erros gerais
+# =============================================================================
 
 ### rota inexistente, esperado: 404 ROUTE_NOT_FOUND
 GET {{baseUrl}}/rota-inexistente
@@ -11,6 +19,10 @@ POST {{baseUrl}}/health
 Content-Type: application/json
 
 { "campo": }
+
+# =============================================================================
+# cors
+# =============================================================================
 
 ### request cors, origem permitida, esperado: 200 com access-control-allow-origin
 GET {{baseUrl}}/health
@@ -29,6 +41,10 @@ Access-Control-Request-Method: GET
 OPTIONS {{baseUrl}}/health
 Origin: http://localhost:9999
 Access-Control-Request-Method: GET
+
+# =============================================================================
+# auth: cadastro
+# =============================================================================
 
 ### cadastro, esperado: 201 com o usuario sem passwordHash
 POST {{baseUrl}}/auth/register
@@ -66,6 +82,10 @@ Content-Type: application/json
 
 {}
 
+# =============================================================================
+# auth: login
+# =============================================================================
+
 ### login, esperado: 200 com token e usuario sem passwordHash
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
@@ -101,3 +121,32 @@ Content-Type: application/json
     "email": "nao-e-email",
     "password": ""
 }
+
+# =============================================================================
+# auth: usuario autenticado
+# =============================================================================
+
+### login guardando o token para as requests seguintes
+# @name loginParaMe
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "vitor@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+### me com token valido, esperado: 200 com o usuario sem passwordHash
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{loginParaMe.response.body.$.token}}
+
+### me sem token, esperado: 401 UNAUTHORIZED
+GET {{baseUrl}}/auth/me
+
+### me com esquema errado no header, esperado: 401 UNAUTHORIZED
+GET {{baseUrl}}/auth/me
+Authorization: Token abc.def.ghi
+
+### me com token invalido, esperado: 401 INVALID_TOKEN
+GET {{baseUrl}}/auth/me
+Authorization: Bearer abc.def.ghi

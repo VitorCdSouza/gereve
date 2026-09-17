@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
+import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { AppError } from '../errors/AppError';
 import { env } from '../config/env';
 
@@ -70,6 +71,31 @@ export function errorHandler(
         };
 
         res.status(409).json(body);
+        return;
+    }
+
+    // recebido pelo authenticate, ao verificar o token
+    if (error instanceof TokenExpiredError) {
+        const body: ErrorResponseBody = {
+            error: {
+                code: 'TOKEN_EXPIRED',
+                message: 'Token de autenticação expirado',
+            },
+        };
+
+        res.status(401).json(body);
+        return;
+    }
+
+    if (error instanceof JsonWebTokenError) {
+        const body: ErrorResponseBody = {
+            error: {
+                code: 'INVALID_TOKEN',
+                message: 'Token de autenticação inválido',
+            },
+        };
+
+        res.status(401).json(body);
         return;
     }
 
