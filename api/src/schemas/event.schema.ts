@@ -1,3 +1,4 @@
+import { EventStatus } from '@prisma/client';
 import { z } from 'zod';
 
 const titleSchema = z
@@ -61,3 +62,74 @@ export const createEventSchema = z
     });
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;
+
+const pageSchema = z.coerce
+    .number({ error: 'Página deve ser um número' })
+    .int({ error: 'Página deve ser um número inteiro' })
+    .positive({ error: 'Página deve ser maior que zero' })
+    .default(1);
+
+const limitSchema = z.coerce
+    .number({ error: 'Limite deve ser um número' })
+    .int({ error: 'Limite deve ser um número inteiro' })
+    .positive({ error: 'Limite deve ser maior que zero' })
+    .max(100, { error: 'Limite deve ser no máximo 100' })
+    .default(10);
+
+const titleFilterSchema = z
+    .string({ error: 'Título deve ser um texto' })
+    .trim()
+    .min(1, { error: 'Título não pode ser vazio' })
+    .optional();
+
+const statusFilterSchema = z
+    .enum(EventStatus, { error: 'Status deve ser DRAFT, PUBLISHED ou CANCELLED' })
+    .optional();
+
+const fromSchema = z
+    .string({ error: 'Data inicial deve ser um texto' })
+    .pipe(
+        z.iso.datetime({
+            offset: true,
+            error: 'Data inicial deve estar no formato ISO 8601',
+        }),
+    )
+    .transform((value) => new Date(value))
+    .optional();
+
+const toSchema = z
+    .string({ error: 'Data final deve ser um texto' })
+    .pipe(
+        z.iso.datetime({
+            offset: true,
+            error: 'Data final deve estar no formato ISO 8601',
+        }),
+    )
+    .transform((value) => new Date(value))
+    .optional();
+
+const organizerIdFilterSchema = z.uuid({ error: 'Organizador deve ser um UUID válido' }).optional();
+
+const sortSchema = z
+    .enum(['startsAt', 'title', 'createdAt'], {
+        error: 'Ordenação deve ser por startsAt, title ou createdAt',
+    })
+    .default('startsAt');
+
+const orderSchema = z
+    .enum(['asc', 'desc'], { error: 'Direção da ordenação deve ser asc ou desc' })
+    .default('asc');
+
+export const listEventsQuerySchema = z.object({
+    page: pageSchema,
+    limit: limitSchema,
+    title: titleFilterSchema,
+    status: statusFilterSchema,
+    from: fromSchema,
+    to: toSchema,
+    organizerId: organizerIdFilterSchema,
+    sort: sortSchema,
+    order: orderSchema,
+});
+
+export type ListEventsQuery = z.infer<typeof listEventsQuerySchema>;

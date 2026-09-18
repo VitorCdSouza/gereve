@@ -263,5 +263,41 @@ Authorization: Bearer {{loginOrganizador.response.body.$.token}}
 
 {}
 
-### listagem publica de eventos, esperado: 200 com array ordenado por startsAt
+### listagem publica de eventos, esperado: 200 com data e infos, ordenado por startsAt
 GET {{baseUrl}}/events
+
+### listagem com paginacao, esperado: 200 com limit 1 e totalPages igual ao total
+GET {{baseUrl}}/events?page=1&limit=1
+
+### listagem na segunda pagina, esperado: 200 com page 2
+GET {{baseUrl}}/events?page=2&limit=1
+
+### filtro por titulo, sem diferenciar maiusculas, esperado: 200 so com eventos de Node.js
+GET {{baseUrl}}/events?title=node
+
+### filtro por status, esperado: 200 com data vazio enquanto nao houver evento publicado
+GET {{baseUrl}}/events?status=PUBLISHED
+
+### filtro por intervalo de datas, esperado: 200 so com eventos de outubro de 2026
+GET {{baseUrl}}/events?from=2026-10-01T00:00:00-03:00&to=2026-10-31T23:59:59-03:00
+
+### filtro por organizador, esperado: 200 so com eventos daquele organizador
+GET {{baseUrl}}/events?organizerId=00000000-0000-0000-0000-000000000000
+
+### ordenacao decrescente por titulo, esperado: 200 ordenado de Z para A
+GET {{baseUrl}}/events?sort=title&order=desc
+
+### pagina zero, esperado: 400 VALIDATION_ERROR em page
+GET {{baseUrl}}/events?page=0
+
+### limite acima do maximo, esperado: 400 VALIDATION_ERROR em limit
+GET {{baseUrl}}/events?limit=101
+
+### status inexistente, esperado: 400 VALIDATION_ERROR em status
+GET {{baseUrl}}/events?status=FOO
+
+### organizador fora do formato UUID, esperado: 400 VALIDATION_ERROR em organizerId
+GET {{baseUrl}}/events?organizerId=abc
+
+### ordenacao por campo nao permitido, esperado: 400 VALIDATION_ERROR em sort
+GET {{baseUrl}}/events?sort=capacity
