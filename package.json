@@ -9,6 +9,7 @@
         "start": "node dist/server.js",
         "db:migrate": "prisma migrate dev",
         "db:deploy": "prisma migrate deploy",
+        "db:seed": "prisma db seed",
         "format": "prettier --write .",
         "format:check": "prettier --check ."
     },
@@ -35,5 +36,8 @@
         "express": "^5.2.1",
         "jsonwebtoken": "^9.0.3",
         "zod": "^4.6.5"
+    },
+    "prisma": {
+        "seed": "tsx prisma/seed.ts"
     }
 }
