@@ -150,3 +150,115 @@ Authorization: Token abc.def.ghi
 ### me com token invalido, esperado: 401 INVALID_TOKEN
 GET {{baseUrl}}/auth/me
 Authorization: Bearer abc.def.ghi
+
+# =============================================================================
+# eventos: criacao
+# =============================================================================
+
+### cadastro do cliente de teste, esperado: 201 com o papel CUSTOMER
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Cliente de Teste",
+    "email": "cliente@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+### login como cliente, guardando o token para as requests seguintes
+# @name loginCliente
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "cliente@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+# authenticate e authorize rodam antes de validate, entao o corpo nem chega a ser lido
+# nas duas requests abaixo
+
+### criacao de evento sem token, esperado: 401 UNAUTHORIZED
+POST {{baseUrl}}/events
+Content-Type: application/json
+
+{}
+
+### criacao de evento como CUSTOMER, esperado: 403 FORBIDDEN
+POST {{baseUrl}}/events
+Content-Type: application/json
+Authorization: Bearer {{loginCliente.response.body.$.token}}
+
+{}
+
+### cadastro do organizador de teste, esperado: 201 com o papel CUSTOMER
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Organizador de Teste",
+    "email": "organizador@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+
+#   docker compose exec postgres psql -U gereve -d gereve \
+#       -c "UPDATE users SET role = 'ORGANIZER' WHERE email = 'organizador@gereve.dev';"
+### login como organizador, guardando o token para as requests seguintes
+# @name loginOrganizador
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "organizador@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+### criacao de evento como ORGANIZER, esperado: 201 com status DRAFT
+POST {{baseUrl}}/events
+Content-Type: application/json
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+{
+    "title": "Palestra de Node.js",
+    "description": "Introdução prática, APIs com Express e Prisma",
+    "location": "Lab 4",
+    "startsAt": "2026-10-01T18:00:00-03:00",
+    "endsAt": "2026-10-01T21:00:00-03:00",
+    "capacity": 30
+}
+
+### criacao com termino anterior ao inicio, esperado: 400 VALIDATION_ERROR em endsAt
+POST {{baseUrl}}/events
+Content-Type: application/json
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+{
+    "title": "Palestra de Node.js",
+    "description": "Introdução prática, APIs com Express e Prisma",
+    "location": "Lab 4",
+    "startsAt": "2026-10-01T21:00:00-03:00",
+    "endsAt": "2026-10-01T18:00:00-03:00",
+    "capacity": 30
+}
+
+### criacao com data fora do padrao e capacidade zero, esperado: 400 VALIDATION_ERROR com dois details
+POST {{baseUrl}}/events
+Content-Type: application/json
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+{
+    "title": "Palestra de Node.js",
+    "description": "Introdução prática, APIs com Express e Prisma",
+    "location": "Lab 4",
+    "startsAt": "01/10/2026",
+    "endsAt": "2026-10-01T18:00:00-03:00",
+    "capacity": 0
+}
+
+### criacao sem corpo, esperado: 400 VALIDATION_ERROR com um detail por campo
+POST {{baseUrl}}/events
+Content-Type: application/json
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+{}
