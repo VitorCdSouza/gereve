@@ -16,3 +16,9 @@ export async function createEvent(data: CreateEventData): Promise<Event> {
 
     return createdEvent;
 }
+
+export async function findEvents(): Promise<Event[]> {
+    const events = await prismaClient.event.findMany({ orderBy: { startsAt: 'asc' } });
+
+    return events;
+}
