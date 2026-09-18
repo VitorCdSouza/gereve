@@ -1,6 +1,23 @@
 import { Event } from '@prisma/client';
-import { createEvent as createEventRecord, findEvents } from '../repositories/event.repository';
-import { CreateEventInput } from '../schemas/event.schema';
+import {
+    EventFilters,
+    countEvents,
+    createEvent as createEventRecord,
+    findEvents,
+} from '../repositories/event.repository';
+import { CreateEventInput, ListEventsQuery } from '../schemas/event.schema';
+
+export type PaginationInfos = {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+};
+
+export type EventListResult = {
+    data: Event[];
+    infos: PaginationInfos;
+};
 
 export async function createEvent(input: CreateEventInput, organizerId: string): Promise<Event> {
     const createdEvent = await createEventRecord({
@@ -16,8 +33,35 @@ export async function createEvent(input: CreateEventInput, organizerId: string):
     return createdEvent;
 }
 
-export async function listEvents(): Promise<Event[]> {
-    const events = await findEvents();
+export async function listEvents(query: ListEventsQuery): Promise<EventListResult> {
+    const filters: EventFilters = {
+        title: query.title,
+        status: query.status,
+        startsAtFrom: query.from,
+        startsAtTo: query.to,
+        organizerId: query.organizerId,
+    };
 
-    return events;
+    const skip = (query.page - 1) * query.limit;
+
+    const events = await findEvents({
+        filters,
+        skip,
+        take: query.limit,
+        sortField: query.sort,
+        sortOrder: query.order,
+    });
+
+    const total = await countEvents(filters);
+    const totalPages = Math.ceil(total / query.limit);
+
+    return {
+        data: events,
+        infos: {
+            page: query.page,
+            limit: query.limit,
+            total,
+            totalPages,
+        },
+    };
 }
