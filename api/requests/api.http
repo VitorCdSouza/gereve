@@ -262,3 +262,6 @@ Content-Type: application/json
 Authorization: Bearer {{loginOrganizador.response.body.$.token}}
 
 {}
+
+### listagem publica de eventos, esperado: 200 com array ordenado por startsAt
+GET {{baseUrl}}/events

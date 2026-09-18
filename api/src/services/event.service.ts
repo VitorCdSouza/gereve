@@ -1,5 +1,5 @@
 import { Event } from '@prisma/client';
-import { createEvent as createEventRecord } from '../repositories/event.repository';
+import { createEvent as createEventRecord, findEvents } from '../repositories/event.repository';
 import { CreateEventInput } from '../schemas/event.schema';
 
 export async function createEvent(input: CreateEventInput, organizerId: string): Promise<Event> {
@@ -14,4 +14,10 @@ export async function createEvent(input: CreateEventInput, organizerId: string):
     });
 
     return createdEvent;
+}
+
+export async function listEvents(): Promise<Event[]> {
+    const events = await findEvents();
+
+    return events;
 }
