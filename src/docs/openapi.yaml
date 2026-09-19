@@ -17,6 +17,8 @@ tags:
       description: Administração de usuários, restrita ao papel ADMIN
     - name: Eventos
       description: Criação, consulta e manutenção de eventos
+    - name: Reservas
+      description: Reservas de vagas em eventos
     - name: Infraestrutura
       description: Verificação de disponibilidade da API
 paths:
@@ -338,6 +340,142 @@ paths:
                     $ref: '#/components/responses/Forbidden'
                 '404':
                     $ref: '#/components/responses/EventNotFound'
+    /events/{id}/reservations:
+        post:
+            tags: [Reservas]
+            summary: Reserva uma vaga no evento
+            description: Restrito ao papel CUSTOMER.
+            parameters:
+                - $ref: '#/components/parameters/EventId'
+            responses:
+                '201':
+                    description: Reserva criada
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Reservation'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '404':
+                    $ref: '#/components/responses/EventNotFound'
+                '409':
+                    description: Evento sem vagas ou reserva já existente para o usuário
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            examples:
+                                semVagas:
+                                    value:
+                                        error:
+                                            code: EVENT_CAPACITY_REACHED
+                                            message: Evento sem vagas disponíveis
+                                reservaDuplicada:
+                                    value:
+                                        error:
+                                            code: RESOURCE_ALREADY_EXISTS
+                                            message: Já existe um registro com os dados informados
+        get:
+            tags: [Reservas]
+            summary: Lista as reservas de um evento
+            description: Permitido ao organizador dono do evento ou ao ADMIN.
+            parameters:
+                - $ref: '#/components/parameters/EventId'
+                - $ref: '#/components/parameters/Page'
+                - $ref: '#/components/parameters/Limit'
+            responses:
+                '200':
+                    description: Página de reservas do evento
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [data, infos]
+                                properties:
+                                    data:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/ReservationWithUser'
+                                    infos:
+                                        $ref: '#/components/schemas/PaginationInfos'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '404':
+                    $ref: '#/components/responses/EventNotFound'
+    /reservations/me:
+        get:
+            tags: [Reservas]
+            summary: Lista as reservas do usuário autenticado
+            parameters:
+                - $ref: '#/components/parameters/Page'
+                - $ref: '#/components/parameters/Limit'
+            responses:
+                '200':
+                    description: Página de reservas do usuário
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [data, infos]
+                                properties:
+                                    data:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/ReservationWithEvent'
+                                    infos:
+                                        $ref: '#/components/schemas/PaginationInfos'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+    /reservations/{id}/cancel:
+        patch:
+            tags: [Reservas]
+            summary: Cancela uma reserva
+            description: Permitido ao dono da reserva ou ao ADMIN.
+            parameters:
+                - $ref: '#/components/parameters/ReservationId'
+            responses:
+                '200':
+                    description: Reserva cancelada
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Reservation'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '404':
+                    description: Reserva não encontrada
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            example:
+                                error:
+                                    code: RESERVATION_NOT_FOUND
+                                    message: Reserva não encontrada
+                '409':
+                    description: Reserva já cancelada
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            example:
+                                error:
+                                    code: RESERVATION_ALREADY_CANCELLED
+                                    message: Reserva já está cancelada
 components:
     securitySchemes:
         bearerAuth:
@@ -375,6 +513,14 @@ components:
             in: path
             required: true
             description: Identificador do evento
+            schema:
+                type: string
+                format: uuid
+        ReservationId:
+            name: id
+            in: path
+            required: true
+            description: Identificador da reserva
             schema:
                 type: string
                 format: uuid
@@ -481,6 +627,9 @@ components:
         EventStatus:
             type: string
             enum: [DRAFT, PUBLISHED, CANCELLED]
+        ReservationStatus:
+            type: string
+            enum: [CONFIRMED, CANCELLED]
         User:
             type: object
             required: [id, name, email, role, createdAt, updatedAt]
@@ -660,5 +809,49 @@ components:
                     minimum: 1
                 status:
                     $ref: '#/components/schemas/EventStatus'
+        Reservation:
+            type: object
+            required: [id, userId, eventId, status, createdAt]
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                userId:
+                    type: string
+                    format: uuid
+                eventId:
+                    type: string
+                    format: uuid
+                status:
+                    $ref: '#/components/schemas/ReservationStatus'
+                createdAt:
+                    type: string
+                    format: date-time
+        ReservationWithUser:
+            allOf:
+                - $ref: '#/components/schemas/Reservation'
+                - type: object
+                  required: [user]
+                  properties:
+                      user:
+                          type: object
+                          required: [id, name, email]
+                          properties:
+                              id:
+                                  type: string
+                                  format: uuid
+                              name:
+                                  type: string
+                              email:
+                                  type: string
+                                  format: email
+        ReservationWithEvent:
+            allOf:
+                - $ref: '#/components/schemas/Reservation'
+                - type: object
+                  required: [event]
+                  properties:
+                      event:
+                          $ref: '#/components/schemas/Event'
 security:
     - bearerAuth: []
