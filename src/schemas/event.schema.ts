@@ -45,6 +45,12 @@ const endsAtSchema = z
     .transform((value) => new Date(value));
 
 function endsAfterStart(event: { startsAt: Date; endsAt: Date }): boolean {
+    const bothDatesParsed = event.startsAt instanceof Date && event.endsAt instanceof Date;
+
+    if (!bothDatesParsed) {
+        return true;
+    }
+
     return event.endsAt.getTime() > event.startsAt.getTime();
 }
 
