@@ -11,6 +11,8 @@ servers:
     - url: http://localhost:3333
       description: Ambiente de desenvolvimento
 tags:
+    - name: Autenticação
+      description: Cadastro, login e dados do usuário autenticado
     - name: Infraestrutura
       description: Verificação de disponibilidade da API
 paths:
@@ -33,11 +35,220 @@ paths:
                                     timestamp:
                                         type: string
                                         format: date-time
+    /auth/register:
+        post:
+            tags: [Autenticação]
+            summary: Cadastra um usuário com papel CUSTOMER
+            security: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RegisterUserInput'
+            responses:
+                '201':
+                    description: Usuário cadastrado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/User'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '409':
+                    description: E-mail já cadastrado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            example:
+                                error:
+                                    code: RESOURCE_ALREADY_EXISTS
+                                    message: Já existe um registro com os dados informados
+    /auth/login:
+        post:
+            tags: [Autenticação]
+            summary: Autentica o usuário e devolve o token de acesso
+            security: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LoginUserInput'
+            responses:
+                '200':
+                    description: Autenticação bem-sucedida
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LoginResult'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    description: Credenciais inválidas
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            example:
+                                error:
+                                    code: INVALID_CREDENTIALS
+                                    message: E-mail ou senha inválidos
+    /auth/me:
+        get:
+            tags: [Autenticação]
+            summary: Devolve o usuário do token informado
+            responses:
+                '200':
+                    description: Usuário autenticado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/User'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '404':
+                    description: Usuário do token não existe mais
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            example:
+                                error:
+                                    code: USER_NOT_FOUND
+                                    message: Usuário não encontrado
 components:
     securitySchemes:
         bearerAuth:
             type: http
             scheme: bearer
             bearerFormat: JWT
+    responses:
+        ValidationError:
+            description: Dados inválidos
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+                    example:
+                        error:
+                            code: VALIDATION_ERROR
+                            message: Dados inválidos
+                            details:
+                                - field: email
+                                  message: E-mail inválido
+        Unauthorized:
+            description: Token ausente, inválido ou expirado
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+                    examples:
+                        tokenAusente:
+                            value:
+                                error:
+                                    code: UNAUTHORIZED
+                                    message: Token de autenticação não informado
+                        tokenInvalido:
+                            value:
+                                error:
+                                    code: INVALID_TOKEN
+                                    message: Token de autenticação inválido
+                        tokenExpirado:
+                            value:
+                                error:
+                                    code: TOKEN_EXPIRED
+                                    message: Token de autenticação expirado
+    schemas:
+        Error:
+            type: object
+            required: [error]
+            properties:
+                error:
+                    type: object
+                    required: [code, message]
+                    properties:
+                        code:
+                            type: string
+                            example: VALIDATION_ERROR
+                        message:
+                            type: string
+                            example: Dados inválidos
+                        details:
+                            type: array
+                            items:
+                                type: object
+                                required: [field, message]
+                                properties:
+                                    field:
+                                        type: string
+                                    message:
+                                        type: string
+        UserRole:
+            type: string
+            enum: [ADMIN, ORGANIZER, CUSTOMER]
+        User:
+            type: object
+            required: [id, name, email, role, createdAt, updatedAt]
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    example: Cliente de Teste
+                email:
+                    type: string
+                    format: email
+                    example: cliente@gereve.dev
+                role:
+                    $ref: '#/components/schemas/UserRole'
+                createdAt:
+                    type: string
+                    format: date-time
+                updatedAt:
+                    type: string
+                    format: date-time
+        RegisterUserInput:
+            type: object
+            required: [name, email, password]
+            properties:
+                name:
+                    type: string
+                    minLength: 3
+                    maxLength: 120
+                    example: Cliente de Teste
+                email:
+                    type: string
+                    format: email
+                    example: cliente@gereve.dev
+                password:
+                    type: string
+                    format: password
+                    minLength: 8
+                    maxLength: 72
+                    example: senha-forte-123
+        LoginUserInput:
+            type: object
+            required: [email, password]
+            properties:
+                email:
+                    type: string
+                    format: email
+                    example: admin@gereve.dev
+                password:
+                    type: string
+                    format: password
+                    example: senha-forte-123
+        LoginResult:
+            type: object
+            required: [token, user]
+            properties:
+                token:
+                    type: string
+                    description: Token JWT a ser enviado no cabeçalho Authorization
+                user:
+                    $ref: '#/components/schemas/User'
 security:
     - bearerAuth: []
