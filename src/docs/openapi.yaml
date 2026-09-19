@@ -19,6 +19,8 @@ tags:
       description: Criação, consulta e manutenção de eventos
     - name: Reservas
       description: Reservas de vagas em eventos
+    - name: Anexos
+      description: Envio e download de arquivos vinculados a eventos
     - name: Infraestrutura
       description: Verificação de disponibilidade da API
 paths:
@@ -476,6 +478,103 @@ paths:
                                 error:
                                     code: RESERVATION_ALREADY_CANCELLED
                                     message: Reserva já está cancelada
+    /events/{id}/attachments:
+        post:
+            tags: [Anexos]
+            summary: Envia um arquivo para o evento
+            description: |
+                Permitido ao organizador dono do evento ou ao ADMIN.
+                Tamanho máximo de 5 MiB (5242880 bytes) e tipos aceitos:
+                `image/jpeg`, `image/png`, `image/webp` e `application/pdf`.
+            parameters:
+                - $ref: '#/components/parameters/EventId'
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            type: object
+                            required: [file]
+                            properties:
+                                file:
+                                    type: string
+                                    format: binary
+            responses:
+                '201':
+                    description: Anexo registrado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Attachment'
+                '400':
+                    description: Arquivo ausente, tipo não permitido ou parâmetro inválido
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            examples:
+                                arquivoAusente:
+                                    value:
+                                        error:
+                                            code: FILE_REQUIRED
+                                            message: Nenhum arquivo enviado no campo file
+                                tipoInvalido:
+                                    value:
+                                        error:
+                                            code: INVALID_FILE_TYPE
+                                            message: 'Tipo de arquivo não permitido. Tipos aceitos: image/jpeg, image/png, image/webp, application/pdf'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '404':
+                    $ref: '#/components/responses/EventNotFound'
+                '413':
+                    description: Arquivo maior que o limite
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            example:
+                                error:
+                                    code: FILE_TOO_LARGE
+                                    message: Arquivo excede o tamanho máximo de 5242880 bytes
+    /attachments/{id}/download:
+        get:
+            tags: [Anexos]
+            summary: Baixa o arquivo de um anexo
+            description: Devolve o arquivo com o nome original em `Content-Disposition`.
+            parameters:
+                - $ref: '#/components/parameters/AttachmentId'
+            responses:
+                '200':
+                    description: Conteúdo do arquivo
+                    content:
+                        application/octet-stream:
+                            schema:
+                                type: string
+                                format: binary
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '404':
+                    description: Anexo ou arquivo armazenado não encontrado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            examples:
+                                anexoInexistente:
+                                    value:
+                                        error:
+                                            code: ATTACHMENT_NOT_FOUND
+                                            message: Anexo não encontrado
+                                arquivoInexistente:
+                                    value:
+                                        error:
+                                            code: ATTACHMENT_FILE_NOT_FOUND
+                                            message: Arquivo do anexo não encontrado
 components:
     securitySchemes:
         bearerAuth:
@@ -521,6 +620,14 @@ components:
             in: path
             required: true
             description: Identificador da reserva
+            schema:
+                type: string
+                format: uuid
+        AttachmentId:
+            name: id
+            in: path
+            required: true
+            description: Identificador do anexo
             schema:
                 type: string
                 format: uuid
@@ -853,5 +960,35 @@ components:
                   properties:
                       event:
                           $ref: '#/components/schemas/Event'
+        Attachment:
+            type: object
+            required:
+                [id, originalName, storedName, mimeType, size, eventId, uploadedById, createdAt]
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                originalName:
+                    type: string
+                    example: cartaz.png
+                storedName:
+                    type: string
+                    example: 6f1c1c62-6a7f-4a0f-9a1e-0f1a2b3c4d5e.png
+                mimeType:
+                    type: string
+                    example: image/png
+                size:
+                    type: integer
+                    description: Tamanho em bytes
+                    example: 204800
+                eventId:
+                    type: string
+                    format: uuid
+                uploadedById:
+                    type: string
+                    format: uuid
+                createdAt:
+                    type: string
+                    format: date-time
 security:
     - bearerAuth: []
