@@ -15,6 +15,8 @@ tags:
       description: Cadastro, login e dados do usuário autenticado
     - name: Usuários
       description: Administração de usuários, restrita ao papel ADMIN
+    - name: Eventos
+      description: Criação, consulta e manutenção de eventos
     - name: Infraestrutura
       description: Verificação de disponibilidade da API
 paths:
@@ -185,6 +187,157 @@ paths:
                                 error:
                                     code: RESOURCE_NOT_FOUND
                                     message: Registro não encontrado
+    /events:
+        get:
+            tags: [Eventos]
+            summary: Lista eventos com paginação, filtros e ordenação
+            security: []
+            parameters:
+                - $ref: '#/components/parameters/Page'
+                - $ref: '#/components/parameters/Limit'
+                - name: title
+                  in: query
+                  description: Trecho do título do evento
+                  schema:
+                      type: string
+                      minLength: 1
+                - name: status
+                  in: query
+                  schema:
+                      $ref: '#/components/schemas/EventStatus'
+                - name: from
+                  in: query
+                  description: Data e hora mínima de início, em ISO 8601 com fuso
+                  schema:
+                      type: string
+                      format: date-time
+                  example: '2026-10-01T00:00:00-03:00'
+                - name: to
+                  in: query
+                  description: Data e hora máxima de início, em ISO 8601 com fuso
+                  schema:
+                      type: string
+                      format: date-time
+                  example: '2026-12-31T23:59:59-03:00'
+                - name: organizerId
+                  in: query
+                  schema:
+                      type: string
+                      format: uuid
+                - name: sort
+                  in: query
+                  schema:
+                      type: string
+                      enum: [startsAt, title, createdAt]
+                      default: startsAt
+                - name: order
+                  in: query
+                  schema:
+                      type: string
+                      enum: [asc, desc]
+                      default: asc
+            responses:
+                '200':
+                    description: Página de eventos
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [data, infos]
+                                properties:
+                                    data:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/Event'
+                                    infos:
+                                        $ref: '#/components/schemas/PaginationInfos'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+        post:
+            tags: [Eventos]
+            summary: Cria um evento
+            description: Restrito aos papéis ORGANIZER e ADMIN. O evento nasce com status DRAFT.
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateEventInput'
+            responses:
+                '201':
+                    description: Evento criado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Event'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+    /events/{id}:
+        get:
+            tags: [Eventos]
+            summary: Consulta um evento pelo identificador
+            security: []
+            parameters:
+                - $ref: '#/components/parameters/EventId'
+            responses:
+                '200':
+                    description: Evento encontrado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Event'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '404':
+                    $ref: '#/components/responses/EventNotFound'
+        patch:
+            tags: [Eventos]
+            summary: Atualiza um evento
+            description: Permitido ao organizador dono do evento ou ao ADMIN.
+            parameters:
+                - $ref: '#/components/parameters/EventId'
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateEventInput'
+            responses:
+                '200':
+                    description: Evento atualizado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Event'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '404':
+                    $ref: '#/components/responses/EventNotFound'
+        delete:
+            tags: [Eventos]
+            summary: Remove um evento
+            description: Permitido ao organizador dono do evento ou ao ADMIN.
+            parameters:
+                - $ref: '#/components/parameters/EventId'
+            responses:
+                '204':
+                    description: Evento removido
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '404':
+                    $ref: '#/components/responses/EventNotFound'
 components:
     securitySchemes:
         bearerAuth:
@@ -214,6 +367,14 @@ components:
             in: path
             required: true
             description: Identificador do usuário
+            schema:
+                type: string
+                format: uuid
+        EventId:
+            name: id
+            in: path
+            required: true
+            description: Identificador do evento
             schema:
                 type: string
                 format: uuid
@@ -263,6 +424,16 @@ components:
                         error:
                             code: FORBIDDEN
                             message: Você não tem permissão para gerenciar este evento
+        EventNotFound:
+            description: Evento não encontrado
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+                    example:
+                        error:
+                            code: EVENT_NOT_FOUND
+                            message: Evento não encontrado
     schemas:
         Error:
             type: object
@@ -307,6 +478,9 @@ components:
         UserRole:
             type: string
             enum: [ADMIN, ORGANIZER, CUSTOMER]
+        EventStatus:
+            type: string
+            enum: [DRAFT, PUBLISHED, CANCELLED]
         User:
             type: object
             required: [id, name, email, role, createdAt, updatedAt]
@@ -375,5 +549,116 @@ components:
             properties:
                 role:
                     $ref: '#/components/schemas/UserRole'
+        Event:
+            type: object
+            required:
+                [
+                    id,
+                    title,
+                    description,
+                    location,
+                    startsAt,
+                    endsAt,
+                    capacity,
+                    status,
+                    organizerId,
+                    createdAt,
+                    updatedAt,
+                ]
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                title:
+                    type: string
+                    example: Palestra de Node.js
+                description:
+                    type: string
+                    example: Introdução prática a APIs com Express e Prisma
+                location:
+                    type: string
+                    example: Laboratório de Informática 4, Bloco C
+                startsAt:
+                    type: string
+                    format: date-time
+                endsAt:
+                    type: string
+                    format: date-time
+                capacity:
+                    type: integer
+                    example: 30
+                status:
+                    $ref: '#/components/schemas/EventStatus'
+                organizerId:
+                    type: string
+                    format: uuid
+                createdAt:
+                    type: string
+                    format: date-time
+                updatedAt:
+                    type: string
+                    format: date-time
+        CreateEventInput:
+            type: object
+            required: [title, description, location, startsAt, endsAt, capacity]
+            properties:
+                title:
+                    type: string
+                    minLength: 3
+                    maxLength: 120
+                    example: Palestra de Node.js
+                description:
+                    type: string
+                    minLength: 10
+                    maxLength: 2000
+                    example: Introdução prática a APIs com Express e Prisma
+                location:
+                    type: string
+                    minLength: 3
+                    maxLength: 200
+                    example: Laboratório de Informática 4, Bloco C
+                startsAt:
+                    type: string
+                    format: date-time
+                    description: ISO 8601 com fuso horário
+                    example: '2026-10-01T18:00:00-03:00'
+                endsAt:
+                    type: string
+                    format: date-time
+                    description: ISO 8601 com fuso horário, posterior a startsAt
+                    example: '2026-10-01T21:00:00-03:00'
+                capacity:
+                    type: integer
+                    minimum: 1
+                    example: 30
+        UpdateEventInput:
+            type: object
+            minProperties: 1
+            properties:
+                title:
+                    type: string
+                    minLength: 3
+                    maxLength: 120
+                description:
+                    type: string
+                    minLength: 10
+                    maxLength: 2000
+                location:
+                    type: string
+                    minLength: 3
+                    maxLength: 200
+                startsAt:
+                    type: string
+                    format: date-time
+                    example: '2026-10-01T18:00:00-03:00'
+                endsAt:
+                    type: string
+                    format: date-time
+                    example: '2026-10-01T21:00:00-03:00'
+                capacity:
+                    type: integer
+                    minimum: 1
+                status:
+                    $ref: '#/components/schemas/EventStatus'
 security:
     - bearerAuth: []
