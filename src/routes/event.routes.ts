@@ -9,20 +9,28 @@ import {
     listEventsQuerySchema,
     updateEventSchema,
 } from '../schemas/event.schema';
-import { create, getById, list, remove, update } from '../controllers/event.controller';
+import {
+    create as createEvent,
+    getById as getEventById,
+    list as listEvent,
+    remove as removeEvent,
+    update as updateEvent,
+} from '../controllers/event.controller';
+import { create as createReservation } from '../controllers/reservation.controller';
 
 export const eventRouter = Router();
 
-eventRouter.get('/', validateQuery(listEventsQuerySchema), list);
+eventRouter.get('/', validateQuery(listEventsQuerySchema), listEvent);
 
-eventRouter.get('/:id', validateParams(eventIdParamsSchema), getById);
+eventRouter.get('/:id', validateParams(eventIdParamsSchema), getEventById);
 
+// #region Eventos
 eventRouter.post(
     '/',
     authenticate,
     authorize(UserRole.ORGANIZER, UserRole.ADMIN),
     validate(createEventSchema),
-    create,
+    createEvent,
 );
 
 eventRouter.patch(
@@ -31,7 +39,7 @@ eventRouter.patch(
     authorize(UserRole.ORGANIZER, UserRole.ADMIN),
     validateParams(eventIdParamsSchema),
     validate(updateEventSchema),
-    update,
+    updateEvent,
 );
 
 eventRouter.delete(
@@ -39,5 +47,19 @@ eventRouter.delete(
     authenticate,
     authorize(UserRole.ORGANIZER, UserRole.ADMIN),
     validateParams(eventIdParamsSchema),
-    remove,
+    removeEvent,
 );
+
+// #endregion
+
+// #region Reservas
+
+eventRouter.post(
+    '/:id/reservations',
+    authenticate,
+    authorize(UserRole.CUSTOMER),
+    validateParams(eventIdParamsSchema),
+    createReservation,
+);
+
+// #endregion
