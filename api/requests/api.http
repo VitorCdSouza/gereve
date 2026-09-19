@@ -435,3 +435,30 @@ Authorization: Bearer {{loginAdmin.response.body.$.token}}
 ### remocao com id fora do formato UUID, esperado: 400 VALIDATION_ERROR em id
 DELETE {{baseUrl}}/events/abc
 Authorization: Bearer {{loginAdmin.response.body.$.token}}
+
+# =============================================================================
+# reservas
+# =============================================================================
+
+### reserva do evento com capacidade 2 pelo CUSTOMER, esperado: 201 com status CONFIRMED
+POST {{baseUrl}}/events/22222222-2222-4222-8222-222222222222/reservations
+Authorization: Bearer {{loginCliente.response.body.$.token}}
+
+### reserva repetida no mesmo evento, esperado: 409 RESOURCE_ALREADY_EXISTS
+POST {{baseUrl}}/events/22222222-2222-4222-8222-222222222222/reservations
+Authorization: Bearer {{loginCliente.response.body.$.token}}
+
+### reserva por ORGANIZER, papel sem permissao, esperado: 403 FORBIDDEN
+POST {{baseUrl}}/events/22222222-2222-4222-8222-222222222222/reservations
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+### reserva sem token, esperado: 401 UNAUTHORIZED
+POST {{baseUrl}}/events/22222222-2222-4222-8222-222222222222/reservations
+
+### reserva de evento inexistente, esperado: 404 EVENT_NOT_FOUND
+POST {{baseUrl}}/events/00000000-0000-0000-0000-000000000000/reservations
+Authorization: Bearer {{loginCliente.response.body.$.token}}
+
+### reserva com id fora do formato UUID, esperado: 400 VALIDATION_ERROR em id
+POST {{baseUrl}}/events/abc/reservations
+Authorization: Bearer {{loginCliente.response.body.$.token}}
