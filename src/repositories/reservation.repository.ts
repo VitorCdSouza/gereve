@@ -74,3 +74,18 @@ export async function countReservationsByUser(userId: string): Promise<number> {
 
     return total;
 }
+
+export async function findReservationById(id: string): Promise<Reservation | null> {
+    const reservation = await prismaClient.reservation.findUnique({ where: { id } });
+
+    return reservation;
+}
+
+export async function cancelReservation(id: string): Promise<Reservation> {
+    const cancelledReservation = await prismaClient.reservation.update({
+        where: { id },
+        data: { status: ReservationStatus.CANCELLED },
+    });
+
+    return cancelledReservation;
+}

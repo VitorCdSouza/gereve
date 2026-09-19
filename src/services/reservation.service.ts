@@ -1,11 +1,13 @@
-import { Reservation } from '@prisma/client';
+import { Reservation, ReservationStatus, UserRole } from '@prisma/client';
 import {
     ReservationWithEvent,
     ReservationWithUser,
     countConfirmedReservationsByEvent,
     countReservationsByEvent,
     countReservationsByUser,
+    cancelReservation as cancelReservationRecord,
     createReservation as createReservationRecord,
+    findReservationById,
     findReservationsByEvent,
     findReservationsByUser,
 } from '../repositories/reservation.repository';
@@ -73,4 +75,36 @@ export async function listUserReservations(
         data: reservations,
         infos: buildPaginationInfos(query.page, query.limit, total),
     };
+}
+
+export type ReservationActor = {
+    id: string;
+    role: UserRole;
+};
+
+function assertActorCanManageReservation(reservation: Reservation, actor: ReservationActor): void {
+    const actorIsOwner = reservation.userId === actor.id;
+    const actorIsAdmin = actor.role === UserRole.ADMIN;
+
+    if (!actorIsOwner && !actorIsAdmin) {
+        throw new AppError('Você não tem permissão para gerenciar esta reserva', 403, 'FORBIDDEN');
+    }
+}
+
+export async function cancelReservation(id: string, actor: ReservationActor): Promise<Reservation> {
+    const reservation = await findReservationById(id);
+
+    if (reservation === null) {
+        throw new AppError('Reserva não encontrada', 404, 'RESERVATION_NOT_FOUND');
+    }
+
+    assertActorCanManageReservation(reservation, actor);
+
+    if (reservation.status === ReservationStatus.CANCELLED) {
+        throw new AppError('Reserva já está cancelada', 409, 'RESERVATION_ALREADY_CANCELLED');
+    }
+
+    const cancelledReservation = await cancelReservationRecord(reservation.id);
+
+    return cancelledReservation;
 }

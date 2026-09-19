@@ -1,11 +1,15 @@
 import { Request, Response } from 'express';
 import {
+    cancelReservation,
     createReservation,
     listEventReservations,
     listUserReservations,
 } from '../services/reservation.service';
 import { eventIdParamsSchema } from '../schemas/event.schema';
-import { listReservationsQuerySchema } from '../schemas/reservation.schema';
+import {
+    listReservationsQuerySchema,
+    reservationIdParamsSchema,
+} from '../schemas/reservation.schema';
 import { AppError } from '../errors/AppError';
 
 export async function create(req: Request, res: Response): Promise<void> {
@@ -43,4 +47,16 @@ export async function listMine(req: Request, res: Response): Promise<void> {
     const listedReservations = await listUserReservations(req.user.id, query);
 
     res.status(200).json(listedReservations);
+}
+
+export async function cancel(req: Request, res: Response): Promise<void> {
+    if (req.user === undefined) {
+        throw new AppError('Token de autenticação não informado', 401, 'UNAUTHORIZED');
+    }
+
+    const params = reservationIdParamsSchema.parse(req.params);
+
+    const cancelledReservation = await cancelReservation(params.id, req.user);
+
+    res.status(200).json(cancelledReservation);
 }
