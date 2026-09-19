@@ -2,8 +2,10 @@ import { NextFunction, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
+import { MulterError } from 'multer';
 import { AppError } from '../errors/AppError';
 import { env } from '../config/env';
+import { MAX_UPLOAD_SIZE_BYTES } from '../config/upload';
 
 type ValidationIssue = {
     field: string;
@@ -108,6 +110,30 @@ export function errorHandler(
         };
 
         res.status(401).json(body);
+        return;
+    }
+
+    if (error instanceof MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            const body: ErrorResponseBody = {
+                error: {
+                    code: 'FILE_TOO_LARGE',
+                    message: `Arquivo excede o tamanho máximo de ${MAX_UPLOAD_SIZE_BYTES} bytes`,
+                },
+            };
+
+            res.status(413).json(body);
+            return;
+        }
+
+        const body: ErrorResponseBody = {
+            error: {
+                code: 'INVALID_UPLOAD',
+                message: 'Envio de arquivo inválido',
+            },
+        };
+
+        res.status(400).json(body);
         return;
     }
 

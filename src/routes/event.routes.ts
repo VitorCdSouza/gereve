@@ -13,6 +13,8 @@ import {
     create as createReservation,
     listByEvent as listEventReservations,
 } from '../controllers/reservation.controller';
+import { upload as uploadAttachment } from '../controllers/attachment.controller';
+import { upload } from '../config/upload';
 
 export const eventRouter = Router();
 
@@ -51,3 +53,11 @@ eventRouter.get(
 );
 
 // #endregion
+
+eventRouter.post(
+    '/:id/attachments',
+    authenticate,
+    authorize(UserRole.ORGANIZER, UserRole.ADMIN),
+    upload.single('file'),
+    uploadAttachment,
+);

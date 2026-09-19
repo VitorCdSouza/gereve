@@ -24,6 +24,7 @@ model User {
 
   events       Event[]
   reservations Reservation[]
+  attachments  Attachment[]
 
   @@map("users")
 }
@@ -49,6 +50,7 @@ model Event {
 
   organizer    User          @relation(fields: [organizerId], references: [id])
   reservations Reservation[]
+  attachments  Attachment[]
 
   @@map("events")
 }
@@ -70,4 +72,20 @@ model Reservation {
 
   @@unique([userId, eventId])
   @@map("reservations")
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  originalName String
+  storedName   String   @unique
+  mimeType     String
+  size         Int
+  eventId      String
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  event      Event @relation(fields: [eventId], references: [id])
+  uploadedBy User  @relation(fields: [uploadedById], references: [id])
+
+  @@map("attachments")
 }
