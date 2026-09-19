@@ -1,31 +1,11 @@
 import bcrypt from 'bcrypt';
-import { User, UserRole } from '@prisma/client';
 import { createUser, findUserByEmail, findUserById } from '../repositories/user.repository';
 import { LoginUserInput, RegisterUserInput } from '../schemas/auth.schema';
+import { PublicUser, toPublicUser } from './user.service';
 import { signAccessToken } from '../lib/token';
 import { AppError } from '../errors/AppError';
 
 const PASSWORD_SALT_ROUNDS = 10;
-
-export type PublicUser = {
-    id: string;
-    name: string;
-    email: string;
-    role: UserRole;
-    createdAt: Date;
-    updatedAt: Date;
-};
-
-function toPublicUser(user: User): PublicUser {
-    return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-    };
-}
 
 export type LoginResult = {
     token: string;
