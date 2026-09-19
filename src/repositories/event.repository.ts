@@ -95,3 +95,23 @@ export async function findEventById(id: string): Promise<Event | null> {
 
     return event;
 }
+
+export type UpdateEventData = {
+    title?: string;
+    description?: string;
+    location?: string;
+    startsAt?: Date;
+    endsAt?: Date;
+    capacity?: number;
+    status?: EventStatus;
+};
+
+export async function updateEvent(id: string, data: UpdateEventData): Promise<Event> {
+    const updatedEvent = await prismaClient.event.update({ where: { id }, data });
+
+    return updatedEvent;
+}
+
+export async function deleteEvent(id: string): Promise<void> {
+    await prismaClient.event.delete({ where: { id } });
+}
