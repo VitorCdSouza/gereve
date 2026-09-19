@@ -7,8 +7,9 @@ import {
     createEventSchema,
     eventIdParamsSchema,
     listEventsQuerySchema,
+    updateEventSchema,
 } from '../schemas/event.schema';
-import { create, getById, list } from '../controllers/event.controller';
+import { create, getById, list, remove, update } from '../controllers/event.controller';
 
 export const eventRouter = Router();
 
@@ -22,4 +23,21 @@ eventRouter.post(
     authorize(UserRole.ORGANIZER, UserRole.ADMIN),
     validate(createEventSchema),
     create,
+);
+
+eventRouter.patch(
+    '/:id',
+    authenticate,
+    authorize(UserRole.ORGANIZER, UserRole.ADMIN),
+    validateParams(eventIdParamsSchema),
+    validate(updateEventSchema),
+    update,
+);
+
+eventRouter.delete(
+    '/:id',
+    authenticate,
+    authorize(UserRole.ORGANIZER, UserRole.ADMIN),
+    validateParams(eventIdParamsSchema),
+    remove,
 );

@@ -139,3 +139,19 @@ export const eventIdParamsSchema = z.object({
 });
 
 export type EventIdParams = z.infer<typeof eventIdParamsSchema>;
+
+const statusSchema = z.enum(EventStatus, {
+    error: 'Status deve ser DRAFT, PUBLISHED ou CANCELLED',
+});
+
+export const updateEventSchema = z.object({
+    title: titleSchema.optional(),
+    description: descriptionSchema.optional(),
+    location: locationSchema.optional(),
+    startsAt: startsAtSchema.optional(),
+    endsAt: endsAtSchema.optional(),
+    capacity: capacitySchema.optional(),
+    status: statusSchema.optional(),
+});
+
+export type UpdateEventInput = z.infer<typeof updateEventSchema>;

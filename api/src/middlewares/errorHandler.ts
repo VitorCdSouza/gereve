@@ -74,6 +74,18 @@ export function errorHandler(
         return;
     }
 
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        const body: ErrorResponseBody = {
+            error: {
+                code: 'RESOURCE_NOT_FOUND',
+                message: 'Registro não encontrado',
+            },
+        };
+
+        res.status(404).json(body);
+        return;
+    }
+
     // recebido pelo authenticate, ao verificar o token
     if (error instanceof TokenExpiredError) {
         const body: ErrorResponseBody = {

@@ -315,3 +315,123 @@ GET {{baseUrl}}/events/00000000-0000-0000-0000-000000000000
 
 ### detalhe com id fora do formato UUID, esperado: 400 VALIDATION_ERROR em id
 GET {{baseUrl}}/events/abc
+
+# =============================================================================
+# eventos: atualizacao e remocao
+# =============================================================================
+
+### criacao do evento usado nas requests de edicao, esperado: 201 com status DRAFT
+# @name eventoParaEdicao
+POST {{baseUrl}}/events
+Content-Type: application/json
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+{
+    "title": "Oficina de Prisma",
+    "description": "Modelagem de dados, migrations e seed",
+    "location": "Lab 2",
+    "startsAt": "2026-11-05T19:00:00-03:00",
+    "endsAt": "2026-11-05T22:00:00-03:00",
+    "capacity": 20
+}
+
+### atualizacao parcial pelo dono, esperado: 200 com status PUBLISHED e capacidade 25
+PATCH {{baseUrl}}/events/{{eventoParaEdicao.response.body.$.id}}
+Content-Type: application/json
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+{
+    "status": "PUBLISHED",
+    "capacity": 25
+}
+
+### login como a organizadora do seed, que nao e dona do evento
+# @name loginOutroOrganizador
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "organizadora@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+### atualizacao por outro ORGANIZER, esperado: 403 FORBIDDEN
+PATCH {{baseUrl}}/events/{{eventoParaEdicao.response.body.$.id}}
+Content-Type: application/json
+Authorization: Bearer {{loginOutroOrganizador.response.body.$.token}}
+
+{
+    "title": "Tentativa indevida de edicao"
+}
+
+### atualizacao como CUSTOMER, barrada pelo authorize, esperado: 403 FORBIDDEN
+PATCH {{baseUrl}}/events/{{eventoParaEdicao.response.body.$.id}}
+Content-Type: application/json
+Authorization: Bearer {{loginCliente.response.body.$.token}}
+
+{
+    "title": "Tentativa indevida de edicao"
+}
+
+### atualizacao sem token, esperado: 401 UNAUTHORIZED
+PATCH {{baseUrl}}/events/{{eventoParaEdicao.response.body.$.id}}
+Content-Type: application/json
+
+{
+    "title": "Tentativa indevida de edicao"
+}
+
+# so o endsAt e enviado, entao a comparacao usa o startsAt ja gravado no banco
+
+### termino anterior ao inicio ja gravado, esperado: 400 INVALID_EVENT_PERIOD
+PATCH {{baseUrl}}/events/{{eventoParaEdicao.response.body.$.id}}
+Content-Type: application/json
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+{
+    "endsAt": "2026-11-05T18:00:00-03:00"
+}
+
+### status fora do enum, esperado: 400 VALIDATION_ERROR em status
+PATCH {{baseUrl}}/events/{{eventoParaEdicao.response.body.$.id}}
+Content-Type: application/json
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+{
+    "status": "FINALIZADO"
+}
+
+### atualizacao de evento inexistente, esperado: 404 EVENT_NOT_FOUND
+PATCH {{baseUrl}}/events/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+Authorization: Bearer {{loginOrganizador.response.body.$.token}}
+
+{
+    "title": "Evento que nao existe"
+}
+
+### remocao por outro ORGANIZER, esperado: 403 FORBIDDEN
+DELETE {{baseUrl}}/events/{{eventoParaEdicao.response.body.$.id}}
+Authorization: Bearer {{loginOutroOrganizador.response.body.$.token}}
+
+### login como admin do seed
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "admin@gereve.dev",
+    "password": "senha-forte-123"
+}
+
+### remocao pelo ADMIN, que nao e o dono, esperado: 204 sem corpo
+DELETE {{baseUrl}}/events/{{eventoParaEdicao.response.body.$.id}}
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
+
+### remocao do mesmo evento de novo, esperado: 404 EVENT_NOT_FOUND
+DELETE {{baseUrl}}/events/{{eventoParaEdicao.response.body.$.id}}
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
+
+### remocao com id fora do formato UUID, esperado: 400 VALIDATION_ERROR em id
+DELETE {{baseUrl}}/events/abc
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
