@@ -4,6 +4,7 @@ import { env } from './config/env';
 import { authRouter } from './routes/auth.routes';
 import { eventRouter } from './routes/event.routes';
 import { reservationRouter } from './routes/reservation.routes';
+import { attachmentRouter } from './routes/attachment.routes';
 import { notFound } from './middlewares/notFound';
 import { errorHandler } from './middlewares/errorHandler';
 
@@ -22,6 +23,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/auth', authRouter);
 app.use('/events', eventRouter);
 app.use('/reservations', reservationRouter);
+app.use('/attachments', attachmentRouter);
 
 app.use(notFound);
 app.use(errorHandler);

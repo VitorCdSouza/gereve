@@ -1,7 +1,12 @@
 import { Request, Response } from 'express';
 import { unlink } from 'node:fs/promises';
-import { UploadedFile, createEventAttachment } from '../services/attachment.service';
+import {
+    UploadedFile,
+    createEventAttachment,
+    getAttachmentDownload,
+} from '../services/attachment.service';
 import { eventIdParamsSchema } from '../schemas/event.schema';
+import { attachmentIdParamsSchema } from '../schemas/attachment.schema';
 import { AppError } from '../errors/AppError';
 
 export async function upload(req: Request, res: Response): Promise<void> {
@@ -32,4 +37,14 @@ export async function upload(req: Request, res: Response): Promise<void> {
         await unlink(storedFilePath);
         throw error;
     }
+}
+
+export async function download(req: Request, res: Response): Promise<void> {
+    const params = attachmentIdParamsSchema.parse(req.params);
+
+    const { attachment, absolutePath } = await getAttachmentDownload(params.id);
+
+    res.setHeader('Content-Type', attachment.mimeType);
+
+    res.download(absolutePath, attachment.originalName);
 }

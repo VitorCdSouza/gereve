@@ -15,3 +15,9 @@ export async function createAttachment(data: CreateAttachmentData): Promise<Atta
 
     return createdAttachment;
 }
+
+export async function findAttachmentById(id: string): Promise<Attachment | null> {
+    const attachment = await prismaClient.attachment.findUnique({ where: { id } });
+
+    return attachment;
+}
