@@ -10,14 +10,12 @@ import {
 import {
     CreateEventInput,
     EventIdParams,
-    ListEventsQuery,
     UpdateEventInput,
+    listEventsQuerySchema,
 } from '../schemas/event.schema';
 import { AppError } from '../errors/AppError';
 
 type CreateEventRequest = Request<ParamsDictionary, unknown, CreateEventInput>;
-
-type ListEventsRequest = Request<ParamsDictionary, unknown, unknown, ListEventsQuery>;
 
 type EventByIdRequest = Request<EventIdParams>;
 
@@ -33,8 +31,10 @@ export async function create(req: CreateEventRequest, res: Response): Promise<vo
     res.status(201).json(createdEvent);
 }
 
-export async function list(req: ListEventsRequest, res: Response): Promise<void> {
-    const listedEvents = await listEvents(req.query);
+export async function list(req: Request, res: Response): Promise<void> {
+    const query = listEventsQuerySchema.parse(req.query);
+
+    const listedEvents = await listEvents(query);
 
     res.status(200).json(listedEvents);
 }

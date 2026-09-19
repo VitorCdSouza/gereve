@@ -10,14 +10,8 @@ import {
     updateEvent as updateEventRecord,
 } from '../repositories/event.repository';
 import { CreateEventInput, ListEventsQuery, UpdateEventInput } from '../schemas/event.schema';
+import { PaginationInfos, buildPaginationInfos, calculateSkip } from '../lib/pagination';
 import { AppError } from '../errors/AppError';
-
-export type PaginationInfos = {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-};
 
 export type EventListResult = {
     data: Event[];
@@ -47,7 +41,7 @@ export async function listEvents(query: ListEventsQuery): Promise<EventListResul
         organizerId: query.organizerId,
     };
 
-    const skip = (query.page - 1) * query.limit;
+    const skip = calculateSkip(query.page, query.limit);
 
     const events = await findEvents({
         filters,
@@ -58,16 +52,10 @@ export async function listEvents(query: ListEventsQuery): Promise<EventListResul
     });
 
     const total = await countEvents(filters);
-    const totalPages = Math.ceil(total / query.limit);
 
     return {
         data: events,
-        infos: {
-            page: query.page,
-            limit: query.limit,
-            total,
-            totalPages,
-        },
+        infos: buildPaginationInfos(query.page, query.limit, total),
     };
 }
 
@@ -86,12 +74,12 @@ export type EventActor = {
     role: UserRole;
 };
 
-function assertActorCanManageEvent(event: Event, actor: EventActor): void {
+export function assertActorCanManageEvent(event: Event, actor: EventActor): void {
     const actorIsOrganizer = event.organizerId === actor.id;
     const actorIsAdmin = actor.role === UserRole.ADMIN;
 
     if (!actorIsOrganizer && !actorIsAdmin) {
-        throw new AppError('Você não tem permissão para alterar este evento', 403, 'FORBIDDEN');
+        throw new AppError('Você não tem permissão para gerenciar este evento', 403, 'FORBIDDEN');
     }
 }
 

@@ -2,13 +2,8 @@ import { Router } from 'express';
 import { UserRole } from '@prisma/client';
 import { authenticate } from '../middlewares/authenticate';
 import { authorize } from '../middlewares/authorize';
-import { validate, validateParams, validateQuery } from '../middlewares/validate';
-import {
-    createEventSchema,
-    eventIdParamsSchema,
-    listEventsQuerySchema,
-    updateEventSchema,
-} from '../schemas/event.schema';
+import { validate, validateParams } from '../middlewares/validate';
+import { createEventSchema, eventIdParamsSchema, updateEventSchema } from '../schemas/event.schema';
 import {
     create as createEvent,
     getById as getEventById,
@@ -16,11 +11,14 @@ import {
     remove as removeEvent,
     update as updateEvent,
 } from '../controllers/event.controller';
-import { create as createReservation } from '../controllers/reservation.controller';
+import {
+    create as createReservation,
+    listByEvent as listEventReservations,
+} from '../controllers/reservation.controller';
 
 export const eventRouter = Router();
 
-eventRouter.get('/', validateQuery(listEventsQuerySchema), listEvent);
+eventRouter.get('/', listEvent);
 
 eventRouter.get('/:id', validateParams(eventIdParamsSchema), getEventById);
 
@@ -60,6 +58,14 @@ eventRouter.post(
     authorize(UserRole.CUSTOMER),
     validateParams(eventIdParamsSchema),
     createReservation,
+);
+
+eventRouter.get(
+    '/:id/reservations',
+    authenticate,
+    authorize(UserRole.ORGANIZER, UserRole.ADMIN),
+    validateParams(eventIdParamsSchema),
+    listEventReservations,
 );
 
 // #endregion

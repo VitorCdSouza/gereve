@@ -1,5 +1,6 @@
 import { EventStatus } from '@prisma/client';
 import { z } from 'zod';
+import { limitSchema, pageSchema } from './pagination.schema';
 
 const titleSchema = z
     .string({ error: 'Título é obrigatório' })
@@ -62,19 +63,6 @@ export const createEventSchema = z
     });
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;
-
-const pageSchema = z.coerce
-    .number({ error: 'Página deve ser um número' })
-    .int({ error: 'Página deve ser um número inteiro' })
-    .positive({ error: 'Página deve ser maior que zero' })
-    .default(1);
-
-const limitSchema = z.coerce
-    .number({ error: 'Limite deve ser um número' })
-    .int({ error: 'Limite deve ser um número inteiro' })
-    .positive({ error: 'Limite deve ser maior que zero' })
-    .max(100, { error: 'Limite deve ser no máximo 100' })
-    .default(10);
 
 const titleFilterSchema = z
     .string({ error: 'Título deve ser um texto' })

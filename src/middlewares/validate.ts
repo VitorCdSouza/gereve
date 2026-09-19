@@ -11,27 +11,6 @@ export function validate(bodySchema: ZodType): RequestHandler {
     };
 }
 
-export function validateQuery<QueryType>(
-    querySchema: ZodType<QueryType>,
-): RequestHandler<ParamsDictionary, unknown, unknown, QueryType> {
-    return function validateRequestQuery(
-        req: Request<ParamsDictionary, unknown, unknown, QueryType>,
-        res: Response,
-        next: NextFunction,
-    ): void {
-        const validatedQuery = querySchema.parse(req.query);
-
-        Object.defineProperty(req, 'query', {
-            value: validatedQuery,
-            writable: true,
-            configurable: true,
-            enumerable: true,
-        });
-
-        next();
-    };
-}
-
 export function validateParams<ParamsType extends ParamsDictionary>(
     paramsSchema: ZodType<ParamsType>,
 ): RequestHandler<ParamsType> {
