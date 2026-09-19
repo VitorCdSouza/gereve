@@ -89,3 +89,9 @@ export async function countEvents(filters: EventFilters): Promise<number> {
 
     return total;
 }
+
+export async function findEventById(id: string): Promise<Event | null> {
+    const event = await prismaClient.event.findUnique({ where: { id } });
+
+    return event;
+}

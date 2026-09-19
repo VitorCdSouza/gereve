@@ -133,3 +133,9 @@ export const listEventsQuerySchema = z.object({
 });
 
 export type ListEventsQuery = z.infer<typeof listEventsQuerySchema>;
+
+export const eventIdParamsSchema = z.object({
+    id: z.uuid({ error: 'Identificador do evento deve ser um UUID válido' }),
+});
+
+export type EventIdParams = z.infer<typeof eventIdParamsSchema>;

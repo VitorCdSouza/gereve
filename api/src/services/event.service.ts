@@ -3,9 +3,11 @@ import {
     EventFilters,
     countEvents,
     createEvent as createEventRecord,
+    findEventById,
     findEvents,
 } from '../repositories/event.repository';
 import { CreateEventInput, ListEventsQuery } from '../schemas/event.schema';
+import { AppError } from '../errors/AppError';
 
 export type PaginationInfos = {
     page: number;
@@ -64,4 +66,14 @@ export async function listEvents(query: ListEventsQuery): Promise<EventListResul
             totalPages,
         },
     };
+}
+
+export async function getEvent(id: string): Promise<Event> {
+    const event = await findEventById(id);
+
+    if (event === null) {
+        throw new AppError('Evento não encontrado', 404, 'EVENT_NOT_FOUND');
+    }
+
+    return event;
 }
