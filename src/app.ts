@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
+import { openapiDocument } from './docs/openapi';
 import { authRouter } from './routes/auth.routes';
 import { eventRouter } from './routes/event.routes';
 import { reservationRouter } from './routes/reservation.routes';
@@ -20,6 +22,8 @@ app.get('/health', (req: Request, res: Response) => {
         timestamp: new Date().toISOString(),
     });
 });
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiDocument));
 
 app.use('/auth', authRouter);
 app.use('/users', userRouter);

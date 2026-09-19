@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+    title: Gereve API
+    version: 1.0.0
+    description: |
+        API de gestão de reservas e eventos.
+
+        Fluxo de uso: cadastre um usuário em `POST /auth/register`, obtenha o token em
+        `POST /auth/login` e informe-o no botão **Authorize** para testar as rotas protegidas.
+servers:
+    - url: http://localhost:3333
+      description: Ambiente de desenvolvimento
+tags:
+    - name: Infraestrutura
+      description: Verificação de disponibilidade da API
+paths:
+    /health:
+        get:
+            tags: [Infraestrutura]
+            summary: Verifica se a API está no ar
+            security: []
+            responses:
+                '200':
+                    description: API disponível
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    status:
+                                        type: string
+                                        example: ok
+                                    timestamp:
+                                        type: string
+                                        format: date-time
+components:
+    securitySchemes:
+        bearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+security:
+    - bearerAuth: []
