@@ -1,20 +1,20 @@
-import { ParamsDictionary } from 'express-serve-static-core';
 import { Request, Response } from 'express';
 import { getAuthenticatedUser, loginUser, registerUser } from '../services/auth.service';
-import { LoginUserInput, RegisterUserInput } from '../schemas/auth.schema';
+import { loginUserSchema, registerUserSchema } from '../schemas/auth.schema';
 import { AppError } from '../errors/AppError';
 
-type RegisterRequest = Request<ParamsDictionary, unknown, RegisterUserInput>;
-type LoginRequest = Request<ParamsDictionary, unknown, LoginUserInput>;
+export async function register(req: Request, res: Response): Promise<void> {
+    const body = registerUserSchema.parse(req.body);
 
-export async function register(req: RegisterRequest, res: Response): Promise<void> {
-    const createdUser = await registerUser(req.body);
+    const createdUser = await registerUser(body);
 
     res.status(201).json(createdUser);
 }
 
-export async function login(req: LoginRequest, res: Response): Promise<void> {
-    const loginResult = await loginUser(req.body);
+export async function login(req: Request, res: Response): Promise<void> {
+    const body = loginUserSchema.parse(req.body);
+
+    const loginResult = await loginUser(body);
 
     res.status(200).json(loginResult);
 }
