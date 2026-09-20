@@ -11,10 +11,11 @@ import {
     findReservationsByEvent,
     findReservationsByUser,
 } from '../repositories/reservation.repository';
-import { EventActor, assertCanManageEvent, getEvent } from './event.service';
+import { assertCanManageEvent, getEvent } from './event.service';
 import { ListReservationsQuery } from '../schemas/reservation.schema';
 import { PaginationInfos, buildPagination, calculateSkip } from '../lib/pagination';
 import { AppError } from '../errors/AppError';
+import { Actor } from '../types/actor';
 
 export type EventReservationListResult = {
     data: ReservationWithUser[];
@@ -43,7 +44,7 @@ export async function createReservation(eventId: string, userId: string): Promis
 export async function listEventReservations(
     eventId: string,
     query: ListReservationsQuery,
-    actor: EventActor,
+    actor: Actor,
 ): Promise<EventReservationListResult> {
     const event = await getEvent(eventId);
 
@@ -77,12 +78,7 @@ export async function listUserReservations(
     };
 }
 
-export type ReservationActor = {
-    id: string;
-    role: UserRole;
-};
-
-function assertActorCanManageReservation(reservation: Reservation, actor: ReservationActor): void {
+function assertActorCanManageReservation(reservation: Reservation, actor: Actor): void {
     const actorIsOwner = reservation.userId === actor.id;
     const actorIsAdmin = actor.role === UserRole.ADMIN;
 
@@ -91,7 +87,7 @@ function assertActorCanManageReservation(reservation: Reservation, actor: Reserv
     }
 }
 
-export async function cancelReservation(id: string, actor: ReservationActor): Promise<Reservation> {
+export async function cancelReservation(id: string, actor: Actor): Promise<Reservation> {
     const reservation = await findReservationById(id);
 
     if (reservation === null) {

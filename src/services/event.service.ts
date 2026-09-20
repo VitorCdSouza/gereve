@@ -12,6 +12,7 @@ import {
 import { CreateEventInput, ListEventsQuery, UpdateEventInput } from '../schemas/event.schema';
 import { PaginationInfos, buildPagination, calculateSkip } from '../lib/pagination';
 import { AppError } from '../errors/AppError';
+import { Actor } from '../types/actor';
 
 export type EventListResult = {
     data: Event[];
@@ -69,12 +70,7 @@ export async function getEvent(id: string): Promise<Event> {
     return event;
 }
 
-export type EventActor = {
-    id: string;
-    role: UserRole;
-};
-
-export function assertCanManageEvent(event: Event, actor: EventActor): void {
+export function assertCanManageEvent(event: Event, actor: Actor): void {
     const actorIsOrganizer = event.organizerId === actor.id;
     const actorIsAdmin = actor.role === UserRole.ADMIN;
 
@@ -96,7 +92,7 @@ function assertPeriodIsValid(startsAt: Date, endsAt: Date): void {
 export async function updateEvent(
     id: string,
     input: UpdateEventInput,
-    actor: EventActor,
+    actor: Actor,
 ): Promise<Event> {
     const currentEvent = await getEvent(id);
 
@@ -122,7 +118,7 @@ export async function updateEvent(
     return updatedEvent;
 }
 
-export async function deleteEvent(id: string, actor: EventActor): Promise<void> {
+export async function deleteEvent(id: string, actor: Actor): Promise<void> {
     const currentEvent = await getEvent(id);
 
     assertCanManageEvent(currentEvent, actor);

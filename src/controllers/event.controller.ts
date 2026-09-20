@@ -12,16 +12,14 @@ import {
     listEventsQuerySchema,
     updateEventSchema,
 } from '../schemas/event.schema';
-import { AppError } from '../errors/AppError';
+import { getActor } from '../lib/actor';
 
 export async function create(req: Request, res: Response): Promise<void> {
-    if (req.user === undefined) {
-        throw new AppError('Token de autenticação não informado', 401, 'UNAUTHORIZED');
-    }
+    const actor = getActor(req);
 
     const body = createEventSchema.parse(req.body);
 
-    const createdEvent = await createEvent(body, req.user.id);
+    const createdEvent = await createEvent(body, actor.id);
 
     res.status(201).json(createdEvent);
 }
@@ -43,26 +41,22 @@ export async function getById(req: Request, res: Response): Promise<void> {
 }
 
 export async function update(req: Request, res: Response): Promise<void> {
-    if (req.user === undefined) {
-        throw new AppError('Token de autenticação não informado', 401, 'UNAUTHORIZED');
-    }
+    const actor = getActor(req);
 
     const params = eventIdParamsSchema.parse(req.params);
     const body = updateEventSchema.parse(req.body);
 
-    const updatedEvent = await updateEvent(params.id, body, req.user);
+    const updatedEvent = await updateEvent(params.id, body, actor);
 
     res.status(200).json(updatedEvent);
 }
 
 export async function remove(req: Request, res: Response): Promise<void> {
-    if (req.user === undefined) {
-        throw new AppError('Token de autenticação não informado', 401, 'UNAUTHORIZED');
-    }
+    const actor = getActor(req);
 
     const params = eventIdParamsSchema.parse(req.params);
 
-    await deleteEvent(params.id, req.user);
+    await deleteEvent(params.id, actor);
 
     res.status(204).send();
 }

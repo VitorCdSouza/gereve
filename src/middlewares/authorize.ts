@@ -1,14 +1,13 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { UserRole } from '@prisma/client';
 import { AppError } from '../errors/AppError';
+import { getActor } from '../lib/actor';
 
 export function authorize(...allowedRoles: UserRole[]): RequestHandler {
     return function authorizeUserRole(req: Request, res: Response, next: NextFunction): void {
-        if (req.user === undefined) {
-            throw new AppError('Token de autenticação não informado', 401, 'UNAUTHORIZED');
-        }
+        const actor = getActor(req);
 
-        const roleIsAllowed = allowedRoles.includes(req.user.role);
+        const roleIsAllowed = allowedRoles.includes(actor.role);
 
         if (!roleIsAllowed) {
             throw new AppError(

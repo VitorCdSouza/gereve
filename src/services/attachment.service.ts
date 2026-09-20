@@ -5,9 +5,10 @@ import {
     createAttachment as createAttachmentRecord,
     findAttachmentById,
 } from '../repositories/attachment.repository';
-import { EventActor, assertCanManageEvent, getEvent } from './event.service';
+import { assertCanManageEvent, getEvent } from './event.service';
 import { UPLOADS_DIRECTORY } from '../config/upload';
 import { AppError } from '../errors/AppError';
+import { Actor } from '../types/actor';
 
 export type UploadedFile = {
     originalName: string;
@@ -19,7 +20,7 @@ export type UploadedFile = {
 export async function createEventAttachment(
     eventId: string,
     file: UploadedFile,
-    actor: EventActor,
+    actor: Actor,
 ): Promise<Attachment> {
     const event = await getEvent(eventId);
 

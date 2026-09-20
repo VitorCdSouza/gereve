@@ -8,11 +8,10 @@ import {
 import { eventIdParamsSchema } from '../schemas/event.schema';
 import { attachmentIdParamsSchema } from '../schemas/attachment.schema';
 import { AppError } from '../errors/AppError';
+import { getActor } from '../lib/actor';
 
 export async function upload(req: Request, res: Response): Promise<void> {
-    if (req.user === undefined) {
-        throw new AppError('Token de autenticação não informado', 401, 'UNAUTHORIZED');
-    }
+    const actor = getActor(req);
 
     if (req.file === undefined) {
         throw new AppError('Nenhum arquivo enviado no campo file', 400, 'FILE_REQUIRED');
@@ -30,7 +29,7 @@ export async function upload(req: Request, res: Response): Promise<void> {
     try {
         const params = eventIdParamsSchema.parse(req.params);
 
-        const createdAttachment = await createEventAttachment(params.id, uploadedFile, req.user);
+        const createdAttachment = await createEventAttachment(params.id, uploadedFile, actor);
 
         res.status(201).json(createdAttachment);
     } catch (error: unknown) {

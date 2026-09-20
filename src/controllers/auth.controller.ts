@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { getAuthenticatedUser, loginUser, registerUser } from '../services/auth.service';
 import { loginUserSchema, registerUserSchema } from '../schemas/auth.schema';
-import { AppError } from '../errors/AppError';
+import { getActor } from '../lib/actor';
 
 export async function register(req: Request, res: Response): Promise<void> {
     const body = registerUserSchema.parse(req.body);
@@ -20,11 +20,9 @@ export async function login(req: Request, res: Response): Promise<void> {
 }
 
 export async function me(req: Request, res: Response): Promise<void> {
-    if (req.user === undefined) {
-        throw new AppError('Token de autenticação não informado', 401, 'UNAUTHORIZED');
-    }
+    const actor = getActor(req);
 
-    const authenticatedUser = await getAuthenticatedUser(req.user.id);
+    const authenticatedUser = await getAuthenticatedUser(actor.id);
 
     res.status(200).json(authenticatedUser);
 }
