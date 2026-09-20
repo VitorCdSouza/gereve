@@ -10,7 +10,7 @@ import {
     updateEvent as updateEventRecord,
 } from '../repositories/event.repository';
 import { CreateEventInput, ListEventsQuery, UpdateEventInput } from '../schemas/event.schema';
-import { PaginationInfos, buildPaginationInfos, calculateSkip } from '../lib/pagination';
+import { PaginationInfos, buildPagination, calculateSkip } from '../lib/pagination';
 import { AppError } from '../errors/AppError';
 
 export type EventListResult = {
@@ -55,7 +55,7 @@ export async function listEvents(query: ListEventsQuery): Promise<EventListResul
 
     return {
         data: events,
-        infos: buildPaginationInfos(query.page, query.limit, total),
+        infos: buildPagination(query.page, query.limit, total),
     };
 }
 
@@ -74,7 +74,7 @@ export type EventActor = {
     role: UserRole;
 };
 
-export function assertActorCanManageEvent(event: Event, actor: EventActor): void {
+export function assertCanManageEvent(event: Event, actor: EventActor): void {
     const actorIsOrganizer = event.organizerId === actor.id;
     const actorIsAdmin = actor.role === UserRole.ADMIN;
 
@@ -100,7 +100,7 @@ export async function updateEvent(
 ): Promise<Event> {
     const currentEvent = await getEvent(id);
 
-    assertActorCanManageEvent(currentEvent, actor);
+    assertCanManageEvent(currentEvent, actor);
 
     const startsAt = input.startsAt ?? currentEvent.startsAt;
     const endsAt = input.endsAt ?? currentEvent.endsAt;
@@ -125,7 +125,7 @@ export async function updateEvent(
 export async function deleteEvent(id: string, actor: EventActor): Promise<void> {
     const currentEvent = await getEvent(id);
 
-    assertActorCanManageEvent(currentEvent, actor);
+    assertCanManageEvent(currentEvent, actor);
 
     await deleteEventRecord(id);
 }

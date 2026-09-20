@@ -11,9 +11,9 @@ import {
     findReservationsByEvent,
     findReservationsByUser,
 } from '../repositories/reservation.repository';
-import { EventActor, assertActorCanManageEvent, getEvent } from './event.service';
+import { EventActor, assertCanManageEvent, getEvent } from './event.service';
 import { ListReservationsQuery } from '../schemas/reservation.schema';
-import { PaginationInfos, buildPaginationInfos, calculateSkip } from '../lib/pagination';
+import { PaginationInfos, buildPagination, calculateSkip } from '../lib/pagination';
 import { AppError } from '../errors/AppError';
 
 export type EventReservationListResult = {
@@ -47,7 +47,7 @@ export async function listEventReservations(
 ): Promise<EventReservationListResult> {
     const event = await getEvent(eventId);
 
-    assertActorCanManageEvent(event, actor);
+    assertCanManageEvent(event, actor);
 
     const skip = calculateSkip(query.page, query.limit);
 
@@ -57,7 +57,7 @@ export async function listEventReservations(
 
     return {
         data: reservations,
-        infos: buildPaginationInfos(query.page, query.limit, total),
+        infos: buildPagination(query.page, query.limit, total),
     };
 }
 
@@ -73,7 +73,7 @@ export async function listUserReservations(
 
     return {
         data: reservations,
-        infos: buildPaginationInfos(query.page, query.limit, total),
+        infos: buildPagination(query.page, query.limit, total),
     };
 }
 

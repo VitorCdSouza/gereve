@@ -5,7 +5,7 @@ import {
     createAttachment as createAttachmentRecord,
     findAttachmentById,
 } from '../repositories/attachment.repository';
-import { EventActor, assertActorCanManageEvent, getEvent } from './event.service';
+import { EventActor, assertCanManageEvent, getEvent } from './event.service';
 import { UPLOADS_DIRECTORY } from '../config/upload';
 import { AppError } from '../errors/AppError';
 
@@ -23,7 +23,7 @@ export async function createEventAttachment(
 ): Promise<Attachment> {
     const event = await getEvent(eventId);
 
-    assertActorCanManageEvent(event, actor);
+    assertCanManageEvent(event, actor);
 
     const createdAttachment = await createAttachmentRecord({
         originalName: file.originalName,

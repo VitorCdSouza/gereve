@@ -11,7 +11,7 @@ export function calculateSkip(page: number, limit: number): number {
     return skip;
 }
 
-export function buildPaginationInfos(page: number, limit: number, total: number): PaginationInfos {
+export function buildPagination(page: number, limit: number, total: number): PaginationInfos {
     const totalPages = Math.ceil(total / limit);
 
     return {

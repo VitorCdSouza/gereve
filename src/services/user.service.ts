@@ -5,7 +5,7 @@ import {
     updateUserRole as updateUserRoleRecord,
 } from '../repositories/user.repository';
 import { ListUsersQuery } from '../schemas/user.schema';
-import { PaginationInfos, buildPaginationInfos, calculateSkip } from '../lib/pagination';
+import { PaginationInfos, buildPagination, calculateSkip } from '../lib/pagination';
 
 export type PublicUser = {
     id: string;
@@ -43,7 +43,7 @@ export async function listUsers(query: ListUsersQuery): Promise<UserListResult> 
 
     return {
         data: publicUsers,
-        infos: buildPaginationInfos(query.page, query.limit, total),
+        infos: buildPagination(query.page, query.limit, total),
     };
 }
 
