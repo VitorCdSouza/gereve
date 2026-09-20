@@ -49,7 +49,7 @@ export function errorHandler(
         return;
     }
 
-    // recebido pelo validate.ts
+    // lancado pelo parse dos schemas zod nos controllers
     if (error instanceof ZodError) {
         const body: ErrorResponseBody = {
             error: {

@@ -22,7 +22,6 @@ eventRouter.get('/', listEvent);
 
 eventRouter.get('/:id', getEventById);
 
-// #region Eventos
 eventRouter.post('/', authenticate, authorize(UserRole.ORGANIZER, UserRole.ADMIN), createEvent);
 
 eventRouter.patch('/:id', authenticate, authorize(UserRole.ORGANIZER, UserRole.ADMIN), updateEvent);
@@ -33,10 +32,6 @@ eventRouter.delete(
     authorize(UserRole.ORGANIZER, UserRole.ADMIN),
     removeEvent,
 );
-
-// #endregion
-
-// #region Reservas
 
 eventRouter.post(
     '/:id/reservations',
@@ -51,8 +46,6 @@ eventRouter.get(
     authorize(UserRole.ORGANIZER, UserRole.ADMIN),
     listEventReservations,
 );
-
-// #endregion
 
 eventRouter.post(
     '/:id/attachments',
