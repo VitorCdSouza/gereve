@@ -19,7 +19,19 @@ export type EventListResult = {
     infos: PaginationInfos;
 };
 
+function assertPeriodIsValid(startsAt: Date, endsAt: Date): void {
+    if (endsAt.getTime() <= startsAt.getTime()) {
+        throw new AppError(
+            'Data de término deve ser posterior à data de início',
+            400,
+            'INVALID_EVENT_PERIOD',
+        );
+    }
+}
+
 export async function createEvent(input: CreateEventInput, organizerId: string): Promise<Event> {
+    assertPeriodIsValid(input.startsAt, input.endsAt);
+
     const createdEvent = await createEventRecord({
         title: input.title,
         description: input.description,
@@ -76,16 +88,6 @@ export function assertCanManageEvent(event: Event, actor: Actor): void {
 
     if (!actorIsOrganizer && !actorIsAdmin) {
         throw new AppError('Você não tem permissão para gerenciar este evento', 403, 'FORBIDDEN');
-    }
-}
-
-function assertPeriodIsValid(startsAt: Date, endsAt: Date): void {
-    if (endsAt.getTime() <= startsAt.getTime()) {
-        throw new AppError(
-            'Data de término deve ser posterior à data de início',
-            400,
-            'INVALID_EVENT_PERIOD',
-        );
     }
 }
 

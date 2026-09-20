@@ -44,29 +44,14 @@ const endsAtSchema = z
     )
     .transform((value) => new Date(value));
 
-function endsAfterStart(event: { startsAt: Date; endsAt: Date }): boolean {
-    const bothDatesParsed = event.startsAt instanceof Date && event.endsAt instanceof Date;
-
-    if (!bothDatesParsed) {
-        return true;
-    }
-
-    return event.endsAt.getTime() > event.startsAt.getTime();
-}
-
-export const createEventSchema = z
-    .object({
-        title: titleSchema,
-        description: descriptionSchema,
-        location: locationSchema,
-        startsAt: startsAtSchema,
-        endsAt: endsAtSchema,
-        capacity: capacitySchema,
-    })
-    .refine(endsAfterStart, {
-        error: 'Data de término deve ser posterior à data de início',
-        path: ['endsAt'],
-    });
+export const createEventSchema = z.object({
+    title: titleSchema,
+    description: descriptionSchema,
+    location: locationSchema,
+    startsAt: startsAtSchema,
+    endsAt: endsAtSchema,
+    capacity: capacitySchema,
+});
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;
 
@@ -131,8 +116,6 @@ export type ListEventsQuery = z.infer<typeof listEventsQuerySchema>;
 export const eventIdParamsSchema = z.object({
     id: z.uuid({ error: 'Identificador do evento deve ser um UUID válido' }),
 });
-
-export type EventIdParams = z.infer<typeof eventIdParamsSchema>;
 
 const statusSchema = z.enum(EventStatus, {
     error: 'Status deve ser DRAFT, PUBLISHED ou CANCELLED',
