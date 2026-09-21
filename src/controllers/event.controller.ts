@@ -4,12 +4,14 @@ import {
     deleteEvent,
     getEvent,
     listEvents,
+    listOrganizerEvents,
     updateEvent,
 } from '../services/event.service';
 import {
     createEventSchema,
     eventIdParamsSchema,
     listEventsQuerySchema,
+    listMyEventsQuerySchema,
     updateEventSchema,
 } from '../schemas/event.schema';
 import { getActor } from '../lib/actor';
@@ -28,6 +30,16 @@ export async function list(req: Request, res: Response): Promise<void> {
     const query = listEventsQuerySchema.parse(req.query);
 
     const listedEvents = await listEvents(query);
+
+    res.status(200).json(listedEvents);
+}
+
+export async function listMine(req: Request, res: Response): Promise<void> {
+    const actor = getActor(req);
+
+    const query = listMyEventsQuerySchema.parse(req.query);
+
+    const listedEvents = await listOrganizerEvents(actor.id, query);
 
     res.status(200).json(listedEvents);
 }

@@ -63,6 +63,7 @@ O seed também cria 4 eventos. Um deles tem capacidade 2, para testar o erro de 
 | GET | /users | ADMIN |
 | PATCH | /users/:id/role | ADMIN |
 | GET | /events | Público |
+| GET | /events/me | ORGANIZER ou ADMIN |
 | GET | /events/:id | Público |
 | POST | /events | ORGANIZER ou ADMIN |
 | PATCH | /events/:id | Dono do evento ou ADMIN |
@@ -76,7 +77,7 @@ O seed também cria 4 eventos. Um deles tem capacidade 2, para testar o erro de 
 | GET | /health | Público |
 | GET | /docs | Público (Swagger) |
 
-Listagens são paginadas com `?page=1&limit=10` (máximo 100). Em `/events` dá para filtrar por `title`, `status`, `from`, `to` e `organizerId` e ordenar com `sort=startsAt&order=asc`.
+Listagens são paginadas com `?page=1&limit=10` (máximo 100). Em `/events` dá para filtrar por `title`, `status`, `from`, `to` e `organizerId` e ordenar com `sort=startsAt&order=asc`; a listagem pública não mostra eventos em rascunho (DRAFT). Em `/events/me` o organizador vê os próprios eventos em qualquer status, com os mesmos filtros exceto `organizerId`.
 
 Os erros sempre voltam no formato:
 

@@ -6,6 +6,7 @@ import {
     create as createEvent,
     getById as getEventById,
     list as listEvent,
+    listMine as listMyEvents,
     remove as removeEvent,
     update as updateEvent,
 } from '../controllers/event.controller';
@@ -19,6 +20,8 @@ import { upload } from '../config/upload';
 export const eventRouter = Router();
 
 eventRouter.get('/', listEvent);
+
+eventRouter.get('/me', authenticate, authorize(UserRole.ORGANIZER, UserRole.ADMIN), listMyEvents);
 
 eventRouter.get('/:id', getEventById);
 

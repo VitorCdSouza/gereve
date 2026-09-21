@@ -65,6 +65,12 @@ const statusFilterSchema = z
     .enum(EventStatus, { error: 'Status deve ser DRAFT, PUBLISHED ou CANCELLED' })
     .optional();
 
+const publicStatusFilterSchema = z
+    .enum([EventStatus.PUBLISHED, EventStatus.CANCELLED], {
+        error: 'Status deve ser PUBLISHED ou CANCELLED',
+    })
+    .optional();
+
 const fromSchema = z
     .string({ error: 'Data inicial deve ser um texto' })
     .pipe(
@@ -103,7 +109,7 @@ export const listEventsQuerySchema = z.object({
     page: pageSchema,
     limit: limitSchema,
     title: titleFilterSchema,
-    status: statusFilterSchema,
+    status: publicStatusFilterSchema,
     from: fromSchema,
     to: toSchema,
     organizerId: organizerIdFilterSchema,
@@ -112,6 +118,19 @@ export const listEventsQuerySchema = z.object({
 });
 
 export type ListEventsQuery = z.infer<typeof listEventsQuerySchema>;
+
+export const listMyEventsQuerySchema = z.object({
+    page: pageSchema,
+    limit: limitSchema,
+    title: titleFilterSchema,
+    status: statusFilterSchema,
+    from: fromSchema,
+    to: toSchema,
+    sort: sortSchema,
+    order: orderSchema,
+});
+
+export type ListMyEventsQuery = z.infer<typeof listMyEventsQuerySchema>;
 
 export const eventIdParamsSchema = z.object({
     id: z.uuid({ error: 'Identificador do evento deve ser um UUID válido' }),

@@ -1,4 +1,4 @@
-import { Event, UserRole } from '@prisma/client';
+import { Event, EventStatus, UserRole } from '@prisma/client';
 import {
     EventFilters,
     UpdateEventData,
@@ -9,7 +9,12 @@ import {
     findEvents,
     updateEvent as updateEventRecord,
 } from '../repositories/event.repository';
-import { CreateEventInput, ListEventsQuery, UpdateEventInput } from '../schemas/event.schema';
+import {
+    CreateEventInput,
+    ListEventsQuery,
+    ListMyEventsQuery,
+    UpdateEventInput,
+} from '../schemas/event.schema';
 import { PaginationInfos, buildPagination, calculateSkip } from '../lib/pagination';
 import { AppError } from '../errors/AppError';
 import { Actor } from '../types/actor';
@@ -45,15 +50,12 @@ export async function createEvent(input: CreateEventInput, organizerId: string):
     return createdEvent;
 }
 
-export async function listEvents(query: ListEventsQuery): Promise<EventListResult> {
-    const filters: EventFilters = {
-        title: query.title,
-        status: query.status,
-        startsAtFrom: query.from,
-        startsAtTo: query.to,
-        organizerId: query.organizerId,
-    };
+const PUBLIC_EVENT_STATUSES: EventStatus[] = [EventStatus.PUBLISHED, EventStatus.CANCELLED];
 
+async function listEventsPage(
+    filters: EventFilters,
+    query: ListEventsQuery | ListMyEventsQuery,
+): Promise<EventListResult> {
     const skip = calculateSkip(query.page, query.limit);
 
     const events = await findEvents({
@@ -70,6 +72,33 @@ export async function listEvents(query: ListEventsQuery): Promise<EventListResul
         data: events,
         infos: buildPagination(query.page, query.limit, total),
     };
+}
+
+export async function listEvents(query: ListEventsQuery): Promise<EventListResult> {
+    const filters: EventFilters = {
+        title: query.title,
+        statuses: query.status !== undefined ? [query.status] : PUBLIC_EVENT_STATUSES,
+        startsAtFrom: query.from,
+        startsAtTo: query.to,
+        organizerId: query.organizerId,
+    };
+
+    return listEventsPage(filters, query);
+}
+
+export async function listOrganizerEvents(
+    organizerId: string,
+    query: ListMyEventsQuery,
+): Promise<EventListResult> {
+    const filters: EventFilters = {
+        title: query.title,
+        statuses: query.status !== undefined ? [query.status] : undefined,
+        startsAtFrom: query.from,
+        startsAtTo: query.to,
+        organizerId,
+    };
+
+    return listEventsPage(filters, query);
 }
 
 export async function getEvent(id: string): Promise<Event> {

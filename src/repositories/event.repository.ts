@@ -13,7 +13,7 @@ export type CreateEventData = {
 
 export type EventFilters = {
     title?: string;
-    status?: EventStatus;
+    statuses?: EventStatus[];
     startsAtFrom?: Date;
     startsAtTo?: Date;
     organizerId?: string;
@@ -38,8 +38,8 @@ function buildEventWhere(filters: EventFilters): Prisma.EventWhereInput {
         where.title = { contains: filters.title, mode: 'insensitive' };
     }
 
-    if (filters.status !== undefined) {
-        where.status = filters.status;
+    if (filters.statuses !== undefined) {
+        where.status = { in: filters.statuses };
     }
 
     if (filters.organizerId !== undefined) {

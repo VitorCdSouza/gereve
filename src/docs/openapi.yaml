@@ -195,6 +195,7 @@ paths:
         get:
             tags: [Eventos]
             summary: Lista eventos com paginação, filtros e ordenação
+            description: Eventos em rascunho (DRAFT) não aparecem na listagem pública. Sem o filtro status, retorna eventos PUBLISHED e CANCELLED.
             security: []
             parameters:
                 - $ref: '#/components/parameters/Page'
@@ -208,7 +209,8 @@ paths:
                 - name: status
                   in: query
                   schema:
-                      $ref: '#/components/schemas/EventStatus'
+                      type: string
+                      enum: [PUBLISHED, CANCELLED]
                 - name: from
                   in: query
                   description: Data e hora mínima de início, em ISO 8601 com fuso
@@ -274,6 +276,71 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Event'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+    /events/me:
+        get:
+            tags: [Eventos]
+            summary: Lista os eventos do organizador autenticado
+            description: Restrito aos papéis ORGANIZER e ADMIN. Inclui eventos em todos os status, inclusive DRAFT.
+            parameters:
+                - $ref: '#/components/parameters/Page'
+                - $ref: '#/components/parameters/Limit'
+                - name: title
+                  in: query
+                  description: Trecho do título do evento
+                  schema:
+                      type: string
+                      minLength: 1
+                - name: status
+                  in: query
+                  schema:
+                      $ref: '#/components/schemas/EventStatus'
+                - name: from
+                  in: query
+                  description: Data e hora mínima de início, em ISO 8601 com fuso
+                  schema:
+                      type: string
+                      format: date-time
+                  example: '2026-10-01T00:00:00-03:00'
+                - name: to
+                  in: query
+                  description: Data e hora máxima de início, em ISO 8601 com fuso
+                  schema:
+                      type: string
+                      format: date-time
+                  example: '2026-12-31T23:59:59-03:00'
+                - name: sort
+                  in: query
+                  schema:
+                      type: string
+                      enum: [startsAt, title, createdAt]
+                      default: startsAt
+                - name: order
+                  in: query
+                  schema:
+                      type: string
+                      enum: [asc, desc]
+                      default: asc
+            responses:
+                '200':
+                    description: Página de eventos do organizador
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [data, infos]
+                                properties:
+                                    data:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/Event'
+                                    infos:
+                                        $ref: '#/components/schemas/PaginationInfos'
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '401':
