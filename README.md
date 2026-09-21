@@ -92,4 +92,4 @@ Campo `file` em multipart/form-data, até 5 MB, aceita JPEG, PNG, WEBP e PDF. Os
 ## Testando
 
 - Swagger em `http://localhost:3333/docs`: faça login, clique em "Authorize" e cole o token.
-- `requests/api.http` (extensão REST Client do VS Code): rode as requisições de cima para baixo, porque o token é repassado automaticamente.
+- `requests/Gereve.postman_collection.json`: importe no Postman, faça login e preencha as variáveis `tokenCUSTOMER`, `tokenORGANIZER` e `tokenADMIN` com os tokens retornados.
